@@ -969,36 +969,58 @@ print sum`
         }
         
         function showFullComputation() {
-            if (gateHistories.length === 0) {
+            // Build a unified tape with ALL gates from gateLog
+            if (gateLog.length === 0) {
                 alert('No computation to show. Run a program first.');
                 return;
             }
             
-            // Limit to first 500 gates for performance
-            const maxGates = 500;
-            const histories = gateHistories.slice(0, maxGates);
-            const truncated = gateHistories.length > maxGates;
+            // Limit gates for performance
+            const maxGates = 200;
+            const gates = gateLog.slice(0, maxGates);
+            const truncated = gateLog.length > maxGates;
             
-            // Calculate dimensions
-            const gateWidth = 40; // pixels per gate width
-            const rowHeight = 2;
-            const gapBetweenGates = 1;
+            const GATE_SPACING = 50;
+            const GATE_CONFIGS_LOCAL = {
+                XOR: { pos: [15, 16], out: 7, steps: 10, width: 35 },
+                AND: { pos: [10, 11], out: 1, steps: 25, width: 30 },
+                OR: { pos: [10, 11], out: 1, steps: 10, width: 25 }
+            };
             
-            // Arrange gates in a grid
-            const gatesPerRow = Math.ceil(Math.sqrt(histories.length * 2));
-            const numRows = Math.ceil(histories.length / gatesPerRow);
+            // Create unified tape
+            const tapeWidth = gates.length * GATE_SPACING + 50;
+            const maxSteps = 25;
             
-            // Find max steps and width
-            const maxSteps = Math.max(...histories.map(h => h.history.length));
-            const maxWidth = Math.max(...histories.map(h => h.width));
+            // Initialize tape with all inputs
+            let tape = new Array(tapeWidth).fill(0);
+            const gateInfo = [];
             
-            const cellW = 2;
-            const cellH = 2;
-            const gatePixelWidth = maxWidth * cellW + gapBetweenGates;
-            const gatePixelHeight = maxSteps * cellH + gapBetweenGates;
+            gates.forEach((g, idx) => {
+                const base = idx * GATE_SPACING + 10;
+                const cfg = GATE_CONFIGS_LOCAL[g.type];
+                tape[base + cfg.pos[0]] = g.inputs[0];
+                tape[base + cfg.pos[1]] = g.inputs[1];
+                gateInfo.push({
+                    type: g.type,
+                    base,
+                    inputPos: [base + cfg.pos[0], base + cfg.pos[1]],
+                    outputPos: base + cfg.out,
+                    readStep: cfg.steps
+                });
+            });
             
-            const canvasWidth = gatesPerRow * gatePixelWidth;
-            const canvasHeight = numRows * gatePixelHeight;
+            // Run unified computation
+            const history = [tape.slice()];
+            for (let step = 0; step < maxSteps; step++) {
+                tape = r110Step(tape);
+                history.push(tape.slice());
+            }
+            
+            // Render to canvas
+            const cellW = 1;
+            const cellH = 3;
+            const canvasWidth = tapeWidth * cellW;
+            const canvasHeight = history.length * cellH;
             
             const canvas = document.getElementById('full-canvas');
             canvas.width = canvasWidth;
@@ -1009,42 +1031,54 @@ print sum`
             ctx.fillStyle = '#0a0a0f';
             ctx.fillRect(0, 0, canvasWidth, canvasHeight);
             
-            // Colors by gate type
-            const colors = {
-                XOR: { bg: '#001828', alive: '#0af' },
-                AND: { bg: '#281800', alive: '#fa0' },
-                OR: { bg: '#180028', alive: '#c0f' }
-            };
+            // Create color map for gate regions
+            const gateColors = new Map();
+            gateInfo.forEach((g, idx) => {
+                const color = g.type === 'XOR' ? '#08a' : g.type === 'AND' ? '#a60' : '#80a';
+                for (let x = g.base; x < g.base + 40 && x < tapeWidth; x++) {
+                    gateColors.set(x, color);
+                }
+            });
             
-            // Draw each gate
-            histories.forEach((gate, idx) => {
-                const col = idx % gatesPerRow;
-                const row = Math.floor(idx / gatesPerRow);
-                const offsetX = col * gatePixelWidth;
-                const offsetY = row * gatePixelHeight;
-                
-                const { bg, alive } = colors[gate.type];
-                
-                gate.history.forEach((state, step) => {
-                    state.forEach((cell, x) => {
-                        const px = offsetX + x * cellW;
-                        const py = offsetY + step * cellH;
-                        ctx.fillStyle = cell ? alive : bg;
-                        ctx.fillRect(px, py, cellW - 0.5, cellH - 0.5);
-                    });
+            // Draw cells
+            history.forEach((row, step) => {
+                row.forEach((cell, x) => {
+                    const px = x * cellW;
+                    const py = step * cellH;
+                    
+                    if (cell) {
+                        ctx.fillStyle = gateColors.get(x) || '#3a7';
+                    } else {
+                        ctx.fillStyle = '#111';
+                    }
+                    ctx.fillRect(px, py, cellW, cellH - 0.5);
                 });
             });
             
-            // Update stats
-            const totalCells = histories.reduce((sum, g) => sum + g.history.length * g.width, 0);
+            // Mark inputs (top row) and outputs
+            ctx.fillStyle = '#fff';
+            gateInfo.forEach(g => {
+                // Input markers
+                g.inputPos.forEach(pos => {
+                    if (history[0][pos]) {
+                        ctx.fillRect(pos * cellW - 1, 0, 3, 2);
+                    }
+                });
+                // Output marker
+                ctx.fillStyle = '#0f0';
+                ctx.fillRect(g.outputPos * cellW - 1, g.readStep * cellH, 3, 2);
+            });
+            
+            // Stats
+            const totalCells = tapeWidth * history.length;
             document.getElementById('comp-stats').innerHTML = 
-                `<strong>${histories.length}</strong> gate computations` +
-                (truncated ? ` (showing first ${maxGates} of ${gateHistories.length})` : '') +
-                ` | <strong>${totalCells.toLocaleString()}</strong> total CA cells computed` +
-                ` | Canvas: ${canvasWidth} × ${canvasHeight} pixels`;
+                `<strong>ONE UNIFIED TAPE</strong>: ${tapeWidth} cells × ${history.length} steps` +
+                ` | <strong>${gates.length}</strong> gates computing in parallel` +
+                (truncated ? ` (showing first ${maxGates} of ${gateLog.length})` : '') +
+                ` | <strong>${totalCells.toLocaleString()}</strong> total CA cells`;
             
             document.getElementById('modal-stats').textContent = 
-                `${histories.length} gates`;
+                `${tapeWidth} × ${history.length} unified`;
             
             document.getElementById('modal').classList.add('show');
         }
