@@ -24,15 +24,15 @@
             background: var(--bg);
             color: var(--text);
             font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
-            font-size: 12px;
-            line-height: 1.5;
+            font-size: 13px;
+            line-height: 1.6;
             overflow: hidden;
             height: 100vh;
         }
         
         .app {
             display: grid;
-            grid-template-columns: 320px 1fr 380px;
+            grid-template-columns: 400px 1fr 420px;
             grid-template-rows: auto 1fr;
             height: 100vh;
             gap: 1px;
@@ -119,8 +119,8 @@
             border: none;
             color: var(--text);
             font-family: inherit;
-            font-size: 12px;
-            line-height: 1.7;
+            font-size: 14px;
+            line-height: 1.8;
             resize: none;
             outline: none;
         }
@@ -231,7 +231,7 @@
         
         .tape-canvas-wrap {
             overflow: auto;
-            max-height: 400px;
+            max-height: 600px;
         }
         
         .tape-legend {
@@ -710,30 +710,37 @@ print c</textarea>
         }
         
         function renderTape() {
-            // Show ACTUAL gate histories that were computed
-            const maxGates = Math.min(50, gateLog.length);
+            // Show ACTUAL gate histories that were computed - TILED layout
+            const maxGates = Math.min(100, gateLog.length);
             const gates = gateLog.slice(0, maxGates);
             
             if (gates.length === 0) {
-                document.getElementById('pane-tape').innerHTML = '<p>No gates computed yet.</p>';
+                document.getElementById('pane-tape').innerHTML = '<p style="color:var(--text-dim)">No gates computed yet. Run a program first.</p>';
                 return;
             }
             
-            // Calculate dimensions - show actual histories side by side
+            // Calculate dimensions for tiled layout
+            const cellW = 3, cellH = 3;
             const gateWidth = gates[0].history[0].length;
             const gateHeight = Math.max(...gates.map(g => g.history.length));
-            const gap = 2;
-            const cellW = 3, cellH = 3;
+            const gatePixelW = gateWidth * cellW;
+            const gatePixelH = gateHeight * cellH + 18; // +18 for label
+            const gapX = 8, gapY = 8;
             
-            const totalWidth = gates.length * (gateWidth * cellW + gap);
-            const totalHeight = gateHeight * cellH;
+            // Calculate how many gates per row to fit nicely
+            const containerWidth = 700; // approximate available width
+            const gatesPerRow = Math.floor(containerWidth / (gatePixelW + gapX));
+            const numRows = Math.ceil(gates.length / gatesPerRow);
+            
+            const canvasW = gatesPerRow * (gatePixelW + gapX);
+            const canvasH = numRows * (gatePixelH + gapY);
             
             document.getElementById('pane-tape').innerHTML = `
                 <div class="tape-container">
                     <div class="tape-header">
-                        <h3>Actual Gate Computations (as they happened)</h3>
+                        <h3>Actual Gate Computations</h3>
                         <div class="tape-stats">
-                            <strong>${gates.length}</strong> gates shown of ${gateLog.length} total
+                            <strong>${gates.length}</strong> of ${gateLog.length} gates
                         </div>
                     </div>
                     <div class="tape-legend">
@@ -741,38 +748,44 @@ print c</textarea>
                         <div class="legend-item"><div class="legend-swatch" style="background:var(--and)"></div> AND</div>
                         <div class="legend-item"><div class="legend-swatch" style="background:var(--or)"></div> OR</div>
                     </div>
-                    <div class="tape-canvas-wrap">
-                        <canvas id="tape-canvas" width="${totalWidth}" height="${totalHeight + 50}"></canvas>
+                    <div style="padding:15px;">
+                        <canvas id="tape-canvas" width="${canvasW}" height="${canvasH}"></canvas>
                     </div>
                 </div>
                 <p style="margin-top:15px;color:var(--text-dim);font-size:11px">
-                    Each column is a <strong>separate Rule 110 run</strong> that actually executed. 
-                    Top row = inputs, bottom = outputs. Different patterns = different computations.
+                    Each tile is a <strong>real Rule 110 cellular automaton</strong> that executed. 
+                    Time flows downward. Labels show: input₁ OP input₂ = output.
                 </p>
             `;
             
             const canvas = document.getElementById('tape-canvas');
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, totalWidth, totalHeight + 50);
+            ctx.fillStyle = '#0a0a0f';
+            ctx.fillRect(0, 0, canvasW, canvasH);
             
-            const colors = {XOR:['#003344','#0cf'], AND:['#442200','#fa0'], OR:['#330044','#c0f']};
+            const colors = {XOR:['#002233','#0cf'], AND:['#332200','#fa0'], OR:['#220033','#c0f']};
             
             gates.forEach((gate, gIdx) => {
-                const offsetX = gIdx * (gateWidth * cellW + gap);
+                const col = gIdx % gatesPerRow;
+                const row = Math.floor(gIdx / gatesPerRow);
+                const offsetX = col * (gatePixelW + gapX);
+                const offsetY = row * (gatePixelH + gapY);
+                
                 const [bgColor, fgColor] = colors[gate.type];
                 
-                gate.history.forEach((row, step) => {
-                    row.forEach((cell, x) => {
+                // Draw gate CA
+                gate.history.forEach((histRow, step) => {
+                    histRow.forEach((cell, x) => {
                         ctx.fillStyle = cell ? fgColor : bgColor;
-                        ctx.fillRect(offsetX + x * cellW, step * cellH, cellW - 0.5, cellH - 0.5);
+                        ctx.fillRect(offsetX + x * cellW, offsetY + step * cellH, cellW - 0.5, cellH - 0.5);
                     });
                 });
                 
-                // Label
-                ctx.fillStyle = '#666';
-                ctx.font = '9px monospace';
-                ctx.fillText(`${gate.inputs[0]}${gate.type[0]}${gate.inputs[1]}=${gate.output}`, offsetX, totalHeight + 12);
+                // Label below
+                ctx.fillStyle = '#555';
+                ctx.font = '10px monospace';
+                const opSymbol = gate.type === 'XOR' ? '⊕' : gate.type === 'AND' ? '∧' : '∨';
+                ctx.fillText(`${gate.inputs[0]}${opSymbol}${gate.inputs[1]}=${gate.output}`, offsetX + 2, offsetY + gateHeight * cellH + 12);
             });
         }
         
