@@ -710,76 +710,69 @@ print c</textarea>
         }
         
         function renderTape() {
-            const maxGates = Math.min(100, gateLog.length);
-            const SPACING = 40;
-            const width = maxGates * SPACING + 20;
-            const steps = 26;
+            // Show ACTUAL gate histories that were computed
+            const maxGates = Math.min(50, gateLog.length);
+            const gates = gateLog.slice(0, maxGates);
             
-            let tape = Array(width).fill(0);
-            gateLog.slice(0, maxGates).forEach((g, idx) => {
-                const base = idx * SPACING + 5;
-                const cfg = GATES[g.type];
-                tape[base + cfg.pos[0]] = g.inputs[0];
-                tape[base + cfg.pos[1]] = g.inputs[1];
-            });
-            
-            const history = [tape.slice()];
-            for (let s = 0; s < steps; s++) {
-                tape = r110Step(tape);
-                history.push(tape.slice());
+            if (gates.length === 0) {
+                document.getElementById('pane-tape').innerHTML = '<p>No gates computed yet.</p>';
+                return;
             }
             
-            const cellW = 2, cellH = 4;
-            const canvasW = width * cellW, canvasH = steps * cellH;
+            // Calculate dimensions - show actual histories side by side
+            const gateWidth = gates[0].history[0].length;
+            const gateHeight = Math.max(...gates.map(g => g.history.length));
+            const gap = 2;
+            const cellW = 3, cellH = 3;
+            
+            const totalWidth = gates.length * (gateWidth * cellW + gap);
+            const totalHeight = gateHeight * cellH;
             
             document.getElementById('pane-tape').innerHTML = `
                 <div class="tape-container">
                     <div class="tape-header">
-                        <h3>Unified Cellular Automaton Tape</h3>
+                        <h3>Actual Gate Computations (as they happened)</h3>
                         <div class="tape-stats">
-                            <strong>${width}</strong> cells × <strong>${steps}</strong> steps = 
-                            <strong>${(width*steps).toLocaleString()}</strong> total
+                            <strong>${gates.length}</strong> gates shown of ${gateLog.length} total
                         </div>
                     </div>
                     <div class="tape-legend">
-                        <div class="legend-item"><div class="legend-swatch" style="background:var(--xor)"></div> XOR region</div>
-                        <div class="legend-item"><div class="legend-swatch" style="background:var(--and)"></div> AND region</div>
-                        <div class="legend-item"><div class="legend-swatch" style="background:var(--or)"></div> OR region</div>
-                        <div class="legend-item"><div class="legend-swatch" style="background:#fff"></div> Input</div>
-                        <div class="legend-item"><div class="legend-swatch" style="background:var(--success)"></div> Output</div>
+                        <div class="legend-item"><div class="legend-swatch" style="background:var(--xor)"></div> XOR</div>
+                        <div class="legend-item"><div class="legend-swatch" style="background:var(--and)"></div> AND</div>
+                        <div class="legend-item"><div class="legend-swatch" style="background:var(--or)"></div> OR</div>
                     </div>
                     <div class="tape-canvas-wrap">
-                        <canvas id="tape-canvas" width="${canvasW}" height="${canvasH}"></canvas>
+                        <canvas id="tape-canvas" width="${totalWidth}" height="${totalHeight + 50}"></canvas>
                     </div>
                 </div>
                 <p style="margin-top:15px;color:var(--text-dim);font-size:11px">
-                    This is <strong>one continuous tape</strong>. All ${maxGates} gates compute simultaneously 
-                    as the cellular automaton evolves. Each colored band is one gate's region.
+                    Each column is a <strong>separate Rule 110 run</strong> that actually executed. 
+                    Top row = inputs, bottom = outputs. Different patterns = different computations.
                 </p>
             `;
             
             const canvas = document.getElementById('tape-canvas');
             const ctx = canvas.getContext('2d');
             ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, canvasW, canvasH);
+            ctx.fillRect(0, 0, totalWidth, totalHeight + 50);
             
-            const colors = {XOR:'#006688', AND:'#885500', OR:'#660088'};
-            const aliveColors = {XOR:'#0cf', AND:'#fa0', OR:'#c0f'};
+            const colors = {XOR:['#003344','#0cf'], AND:['#442200','#fa0'], OR:['#330044','#c0f']};
             
-            const regions = [];
-            gateLog.slice(0,maxGates).forEach((g,idx) => {
-                const base = idx * SPACING + 5;
-                regions.push({start:base, end:base+35, type:g.type});
-            });
-            
-            const getRegion = x => regions.find(r => x >= r.start && x < r.end);
-            
-            history.forEach((row, step) => {
-                row.forEach((cell, x) => {
-                    const r = getRegion(x);
-                    ctx.fillStyle = cell ? (r ? aliveColors[r.type] : '#3a7') : (r ? colors[r.type] : '#111');
-                    ctx.fillRect(x*cellW, step*cellH, cellW-0.5, cellH-0.5);
+            gates.forEach((gate, gIdx) => {
+                const offsetX = gIdx * (gateWidth * cellW + gap);
+                const [bgColor, fgColor] = colors[gate.type];
+                
+                gate.history.forEach((row, step) => {
+                    row.forEach((cell, x) => {
+                        ctx.fillStyle = cell ? fgColor : bgColor;
+                        ctx.fillRect(offsetX + x * cellW, step * cellH, cellW - 0.5, cellH - 0.5);
+                    });
                 });
+                
+                // Label
+                ctx.fillStyle = '#666';
+                ctx.font = '9px monospace';
+                ctx.fillText(`${gate.inputs[0]}${gate.type[0]}${gate.inputs[1]}=${gate.output}`, offsetX, totalHeight + 12);
             });
         }
         
