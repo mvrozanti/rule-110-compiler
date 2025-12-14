@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Rule 110</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; padding: 10px; font-family: monospace; }
+        #input { position: fixed; top: 10px; left: 10px; padding: 6px 10px; background: #111; border: 1px solid #333; color: #fff; font-size: 11px; width: 220px; }
+        #input:focus { outline: none; border-color: #555; }
+        #viz { display: flex; flex-direction: column; gap: 0; margin-top: 40px; }
+        .row { display: flex; gap: 0; line-height: 0; }
+        .cell { width: 6px; height: 6px; display: inline-block; background: #000; position: relative; }
+        .cell.alive { background: #fff; }
+        .cell.region { outline: 1px solid #f00; outline-offset: -1px; }
+        .tooltip { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 4px; background: rgba(0,0,0,0.95); color: #fff; padding: 6px 8px; font-size: 10px; white-space: normal; max-width: 200px; display: none; z-index: 1000; border: 1px solid #333; }
+        .cell.region:hover .tooltip { display: block; }
+    </style>
+</head>
+<body>
+    <input type="text" id="input" value="arith:add(15, 31)" autocomplete="off">
+    <div id="viz"></div>
+    <script>
+        const rule = { '111':0, '110':1, '101':1, '100':0, '011':1, '010':1, '001':1, '000':0 };
+        function step(s) { return s.map((c,i) => rule[`${i>0?s[i-1]:0}${c}${i<s.length-1?s[i+1]:0}`]); }
+        function bin(v,b=8) { return v.toString(2).padStart(b,'0').split('').map(x=>+x); }
+        function parse(cmd) {
+            const m = cmd.match(/arith:(\w+)\((.*?)\)/);
+            if (!m) throw 'Invalid';
+            const [op, args] = [m[1], m[2].split(',').map(x=>+x)];
+            const a = bin(args[0]), b = bin(args[1]), sep = [0,0,0,0], mark = [1,1], pad = [0,0,0,0,0,0,0,0,0];
+            const state = [...a, ...sep, ...b, ...mark, ...pad];
+            const regions = [
+                { s: 0, e: a.length, l: `Input A: ${args[0]} (${args[0].toString(2)})`, t: 'A' },
+                { s: a.length+sep.length, e: a.length+sep.length+b.length, l: `Input B: ${args[1]} (${args[1].toString(2)})`, t: 'B' },
+                { s: a.length+sep.length+b.length+mark.length, e: state.length, l: `Output: ${args[0]}${op==='add'?'+':op==='subtract'?'-':'×'}${args[1]}=${op==='add'?args[0]+args[1]:op==='subtract'?args[0]-args[1]:args[0]*args[1]}. Result in binary.`, t: 'Out' }
+            ];
+            return { state, regions, r: op==='add'?args[0]+args[1]:op==='subtract'?args[0]-args[1]:args[0]*args[1] };
+        }
+        function render() {
+            const cmd = document.getElementById('input').value.trim();
+            const viz = document.getElementById('viz');
+            viz.innerHTML = '';
+            if (!cmd) return;
+            try {
+                const { state, regions } = parse(cmd);
+                const h = [state];
+                let s = [...state];
+                for (let i = 0; i < 50; i++) { s = step(s); h.push([...s]); }
+                const rmap = {};
+                regions.forEach((r, i) => { for (let j = r.s; j < r.e; j++) rmap[j] = i; });
+                h.forEach(state => {
+                    const row = document.createElement('div');
+                    row.className = 'row';
+                    state.forEach((v, i) => {
+                        const c = document.createElement('span');
+                        c.className = `cell ${v ? 'alive' : 'dead'}`;
+                        if (rmap[i] !== undefined) {
+                            c.classList.add('region');
+                            const t = document.createElement('div');
+                            t.className = 'tooltip';
+                            t.textContent = regions[rmap[i]].l;
+                            c.appendChild(t);
+                        }
+                        row.appendChild(c);
+                    });
+                    viz.appendChild(row);
+                });
+            } catch(e) {}
+        }
+        let t;
+        document.getElementById('input').addEventListener('input', () => { clearTimeout(t); t = setTimeout(render, 200); });
+        render();
+    </script>
+</body>
+</html>

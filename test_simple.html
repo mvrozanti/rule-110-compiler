@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Test</title>
+    <style>
+        body { background: #000; color: #fff; padding: 20px; }
+        .test { margin: 20px 0; padding: 10px; border: 1px solid #333; }
+        .pass { color: #0f0; }
+        .fail { color: #f00; }
+    </style>
+</head>
+<body>
+    <h1>Visualizer Component Tests</h1>
+    <div id="tests"></div>
+    
+    <script>
+        const tests = [];
+        
+        // Test 1: Rule 110 table
+        const rule110Table = {
+            '111': 0, '110': 1, '101': 1, '100': 0,
+            '011': 1, '010': 1, '001': 1, '000': 0
+        };
+        tests.push({
+            name: 'Rule 110 table exists',
+            pass: Object.keys(rule110Table).length === 8
+        });
+        
+        // Test 2: Binary encoding
+        function encodeBinary(value, bits = 8) {
+            return value.toString(2).padStart(bits, '0').split('').map(b => parseInt(b));
+        }
+        const bin15 = encodeBinary(15, 8);
+        tests.push({
+            name: 'Binary encoding 15',
+            pass: bin15.join('') === '00001111' && bin15.length === 8
+        });
+        
+        // Test 3: Rule 110 step
+        function rule110Step(state) {
+            const next = [];
+            const n = state.length;
+            for (let i = 0; i < n; i++) {
+                const left = i > 0 ? state[i - 1] : 0;
+                const center = state[i];
+                const right = i < n - 1 ? state[i + 1] : 0;
+                next.push(rule110Table[`${left}${center}${right}`]);
+            }
+            return next;
+        }
+        const testState = [1, 1, 0];
+        const nextState = rule110Step(testState);
+        tests.push({
+            name: 'Rule 110 step function',
+            pass: Array.isArray(nextState) && nextState.length === 3 && nextState[0] !== undefined
+        });
+        
+        // Test 4: Parse operation
+        function parseOperation(operationCode) {
+            const arithMatch = operationCode.match(/arith:(\w+)\((.*?)\)/);
+            if (arithMatch) {
+                const op = arithMatch[1].toLowerCase();
+                const args = arithMatch[2].split(',').map(a => parseInt(a.trim()));
+                let result;
+                if (op === 'add') result = args[0] + args[1];
+                return { type: 'arith', op, args, result };
+            }
+            throw new Error('Invalid');
+        }
+        try {
+            const parsed = parseOperation('arith:add(15, 31)');
+            tests.push({
+                name: 'Parse arith:add(15, 31)',
+                pass: parsed.result === 46 && parsed.args[0] === 15 && parsed.args[1] === 31
+            });
+        } catch (e) {
+            tests.push({ name: 'Parse arith:add(15, 31)', pass: false, error: e.message });
+        }
+        
+        // Test 5: Compile arithmetic
+        function compileArithmeticOp(op, a, b) {
+            const encodedA = encodeBinary(a, 8);
+            const encodedB = encodeBinary(b, 8);
+            const separator = [0, 0, 0, 0];
+            const outputMarker = [1, 1];
+            const padding = new Array(9).fill(0);
+            return [...encodedA, ...separator, ...encodedB, ...outputMarker, ...padding];
+        }
+        const compiled = compileArithmeticOp('add', 15, 31);
+        tests.push({
+            name: 'Compile arithmetic operation',
+            pass: compiled.length === 30 && compiled[0] === 0 && compiled[7] === 1
+        });
+        
+        // Test 6: DOM manipulation
+        const testDiv = document.createElement('div');
+        testDiv.className = 'cell-row';
+        const testCell = document.createElement('span');
+        testCell.className = 'cell alive';
+        testDiv.appendChild(testCell);
+        tests.push({
+            name: 'DOM cell creation',
+            pass: testDiv.children.length === 1 && testCell.classList.contains('alive')
+        });
+        
+        // Display results
+        const testsDiv = document.getElementById('tests');
+        let html = '';
+        let passCount = 0;
+        tests.forEach(test => {
+            const status = test.pass ? 'PASS' : 'FAIL';
+            const className = test.pass ? 'pass' : 'fail';
+            html += `<div class="test ${className}">${test.name}: ${status}${test.error ? ' - ' + test.error : ''}</div>`;
+            if (test.pass) passCount++;
+        });
+        html += `<div class="test"><strong>Result: ${passCount}/${tests.length} tests passed</strong></div>`;
+        testsDiv.innerHTML = html;
+        
+        console.log('Tests:', tests);
+    </script>
+</body>
+</html>
+

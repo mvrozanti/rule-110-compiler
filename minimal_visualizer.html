@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Rule 110 Glider Compiler</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #050508;
+            color: #ccc;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            padding: 25px;
+            min-height: 100vh;
+        }
+        
+        h1 {
+            font-size: 20px;
+            font-weight: normal;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 25px;
+        }
+        
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .controls input {
+            width: 70px;
+            padding: 12px;
+            font-size: 20px;
+            text-align: center;
+            background: #0a0a0f;
+            border: 2px solid #333;
+            color: #fff;
+            font-family: inherit;
+        }
+        
+        .controls input:focus {
+            outline: none;
+            border-color: #4af;
+        }
+        
+        .controls .op {
+            font-size: 22px;
+            color: #555;
+        }
+        
+        .controls .result {
+            font-size: 28px;
+            color: #0f0;
+            font-weight: bold;
+            min-width: 60px;
+        }
+        
+        .view-toggle {
+            display: flex;
+            gap: 0;
+            margin-left: 30px;
+        }
+        
+        .view-toggle button {
+            background: #1a1a20;
+            border: 1px solid #333;
+            color: #888;
+            padding: 8px 16px;
+            font-family: inherit;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        
+        .view-toggle button:first-child {
+            border-radius: 4px 0 0 4px;
+        }
+        
+        .view-toggle button:last-child {
+            border-radius: 0 4px 4px 0;
+            border-left: none;
+        }
+        
+        .view-toggle button:hover {
+            background: #252530;
+            color: #aaa;
+        }
+        
+        .view-toggle button.active {
+            background: #333;
+            color: #fff;
+            border-color: #555;
+        }
+        
+        .status {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .status .correct {
+            color: #0f0;
+        }
+        
+        .explanation {
+            background: #0a0a10;
+            border-left: 3px solid #4af;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            max-width: 800px;
+            line-height: 1.7;
+            font-size: 13px;
+        }
+        
+        .explanation h2 {
+            font-size: 14px;
+            color: #fff;
+            margin-bottom: 10px;
+            font-weight: normal;
+        }
+        
+        .explanation p {
+            margin-bottom: 8px;
+            color: #888;
+        }
+        
+        .explanation .hl { color: #fff; }
+        .explanation .input-color { color: #0af; }
+        .explanation .output-color { color: #f0a; }
+        .explanation .glider { color: #f80; }
+        
+        .grid-container {
+            overflow-x: auto;
+            margin-bottom: 20px;
+            margin-left: 60px;
+            position: relative;
+        }
+        
+        .grid {
+            display: inline-flex;
+            flex-direction: column;
+            background: #000;
+        }
+        
+        .row {
+            display: flex;
+            height: 3px;
+        }
+        
+        .cell {
+            width: 2px;
+            height: 3px;
+            background: #080810;
+            flex-shrink: 0;
+        }
+        
+        .cell.alive {
+            background: #335;
+        }
+        
+        /* Glider disturbances */
+        .cell.disturbance {
+            background: #a50 !important;
+        }
+        .cell.disturbance.alive {
+            background: #f80 !important;
+        }
+        
+        /* Input regions (first row) */
+        .cell.input-region {
+            background: #024 !important;
+        }
+        .cell.input-region.alive {
+            background: #08f !important;
+        }
+        .cell.input-region.disturbance {
+            background: #048 !important;
+        }
+        .cell.input-region.disturbance.alive {
+            background: #0af !important;
+        }
+        
+        /* Output regions (last row) */
+        .cell.output-region {
+            background: #302 !important;
+        }
+        .cell.output-region.alive {
+            background: #a08 !important;
+        }
+        .cell.output-region.disturbance {
+            background: #504 !important;
+        }
+        .cell.output-region.disturbance.alive {
+            background: #f0a !important;
+        }
+        
+        /* Hover highlight */
+        .cell.input-region.highlight {
+            background: #06a !important;
+        }
+        .cell.input-region.alive.highlight {
+            background: #0cf !important;
+        }
+        .cell.output-region.highlight {
+            background: #806 !important;
+        }
+        .cell.output-region.alive.highlight {
+            background: #f4c !important;
+        }
+        
+        /* Column highlight on hover */
+        .column-highlight {
+            position: absolute;
+            top: 0;
+            width: 2px;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .column-highlight.input {
+            background: rgba(0, 170, 255, 0.15);
+        }
+        .column-highlight.output {
+            background: rgba(255, 0, 170, 0.15);
+        }
+        
+        #tooltip {
+            position: fixed;
+            background: rgba(0, 0, 0, 0.95);
+            color: #fff;
+            padding: 10px 14px;
+            font-size: 12px;
+            border: 1px solid #444;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+            max-width: 250px;
+            line-height: 1.5;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 25px;
+            margin-bottom: 15px;
+            font-size: 11px;
+            color: #888;
+        }
+        
+        .legend .swatch {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+        
+        .stats {
+            font-size: 11px;
+            color: #555;
+            margin-top: 15px;
+        }
+        
+        .separator-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 24px;
+            background: #0a0a10;
+            border-top: 1px dashed #333;
+            border-bottom: 1px dashed #333;
+        }
+        
+        .sep-text {
+            color: #555;
+            font-size: 10px;
+            letter-spacing: 1px;
+        }
+        
+        .row.first-row, .row.last-row {
+            position: relative;
+        }
+        
+        .row.first-row::before {
+            content: 'INPUT';
+            position: absolute;
+            left: -50px;
+            font-size: 9px;
+            color: #0af;
+            letter-spacing: 1px;
+        }
+        
+        .row.last-row::before {
+            content: 'OUTPUT';
+            position: absolute;
+            left: -55px;
+            font-size: 9px;
+            color: #f0a;
+            letter-spacing: 1px;
+        }
+        
+        
+        .theory-section {
+            background: #08080c;
+            border: 1px solid #222;
+            padding: 25px 30px;
+            margin-top: 30px;
+            max-width: 800px;
+        }
+        
+        .theory-section h2 {
+            font-size: 16px;
+            color: #fff;
+            margin-bottom: 20px;
+            font-weight: normal;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+        
+        .theory-block {
+            margin-bottom: 25px;
+        }
+        
+        .theory-block:last-child {
+            margin-bottom: 0;
+        }
+        
+        .theory-block h3 {
+            font-size: 13px;
+            color: #0af;
+            margin-bottom: 10px;
+            font-weight: normal;
+        }
+        
+        .theory-block p {
+            color: #999;
+            font-size: 13px;
+            line-height: 1.7;
+            margin-bottom: 8px;
+        }
+        
+        .theory-block strong {
+            color: #fff;
+        }
+        
+        .theory-block code {
+            background: #151520;
+            padding: 2px 6px;
+            color: #f80;
+            font-size: 12px;
+        }
+        
+        .theory-block ul {
+            margin: 10px 0 10px 20px;
+            color: #888;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+        
+        .theory-block .formula {
+            background: #0a0a15;
+            border-left: 3px solid #4af;
+            padding: 10px 15px;
+            font-family: inherit;
+            color: #aaa;
+            margin: 10px 0;
+        }
+        
+        #theory-breakdown {
+            background: #0a0a12;
+            padding: 15px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        
+        #theory-breakdown .bit-step {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+        
+        #theory-breakdown .bit-label {
+            color: #666;
+            width: 50px;
+        }
+        
+        #theory-breakdown .bit-calc {
+            color: #888;
+        }
+        
+        #theory-breakdown .bit-result {
+            color: #0f0;
+            font-weight: bold;
+        }
+        
+        #theory-breakdown .carry {
+            color: #f80;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Rule 110 Glider-Based Addition</h1>
+    <p class="subtitle">All computation happens in ONE unified cellular automaton run — hover on first/last row to see input/output regions</p>
+    
+    <div class="controls">
+        <input type="number" id="a" value="3" min="0" max="15">
+        <span class="op">+</span>
+        <input type="number" id="b" value="5" min="0" max="15">
+        <span class="op">=</span>
+        <span class="result" id="result">8</span>
+        <div class="view-toggle">
+            <button id="view-full" class="active">Full</button>
+            <button id="view-compact">I/O Only</button>
+        </div>
+    </div>
+    
+    <div class="status" id="status"></div>
+    
+    <div class="legend">
+        <span><span class="swatch" style="background:#0af"></span>Input regions (top row)</span>
+        <span><span class="swatch" style="background:#f0a"></span>Output regions (bottom row)</span>
+        <span><span class="swatch" style="background:#f80"></span>Gliders (propagating signals)</span>
+    </div>
+    
+    <div class="explanation">
+        <h2>How to read this:</h2>
+        <p>The <span class="input-color">blue regions</span> at the TOP are where input bits are encoded as glider bubbles.</p>
+        <p>The <span class="output-color">pink regions</span> at the BOTTOM are where output bits are read after evolution.</p>
+        <p>The <span class="glider">orange cells</span> are gliders — disturbances propagating through the ether pattern.</p>
+        <p><span class="hl">Hover</span> on any input or output region to highlight it and see details.</p>
+    </div>
+    
+    <div class="grid-container" id="grid-container">
+        <div class="grid" id="grid"></div>
+        <div class="column-highlight input" id="col-hl-input" style="display:none;"></div>
+        <div class="column-highlight output" id="col-hl-output" style="display:none;"></div>
+    </div>
+    
+    <div class="stats" id="stats"></div>
+    
+    <div class="theory-section">
+        <h2>How Glider-Based Computation Works</h2>
+        
+        <div class="theory-block">
+            <h3>1. The Ether Background</h3>
+            <p>Rule 110 has a stable periodic background called <strong>ether</strong>: a 14-cell repeating pattern 
+            <code>00010011011111</code>. When evolved, ether remains ether — it's the "vacuum" of Rule 110.</p>
+        </div>
+        
+        <div class="theory-block">
+            <h3>2. Encoding Inputs as Gliders</h3>
+            <p>To encode a <strong>1 bit</strong>, we inject a "phase-shifted bubble" into the ether at a specific position. 
+            This creates a <strong>glider</strong> — a localized disturbance that propagates through the ether over time.</p>
+            <p>To encode a <strong>0 bit</strong>, we leave pure ether (no injection).</p>
+            <p class="formula">Input bit = 1 → inject bubble → glider propagates leftward<br>
+            Input bit = 0 → pure ether → no propagation</p>
+        </div>
+        
+        <div class="theory-block">
+            <h3>3. Glider Collisions = Logic</h3>
+            <p>When two gliders collide, they interact and produce new gliders (or annihilate). 
+            This is the basis of computation:</p>
+            <ul>
+                <li><strong>XOR-like behavior:</strong> Two gliders colliding may annihilate (1⊕1=0), while a single glider passes through (1⊕0=1)</li>
+                <li><strong>AND-like behavior:</strong> Certain collision configurations only produce output if both inputs are present</li>
+            </ul>
+            <p>By carefully positioning input gliders, we can arrange for their collisions to compute logic gates.</p>
+        </div>
+        
+        <div class="theory-block">
+            <h3>4. Reading the Output</h3>
+            <p>After enough evolution steps, we examine specific output regions:</p>
+            <ul>
+                <li><strong>Disturbance present</strong> (differs from evolved pure ether) → output = 1</li>
+                <li><strong>No disturbance</strong> (matches evolved pure ether) → output = 0</li>
+            </ul>
+            <p class="formula">Compare final_state[region] vs pure_ether_evolved[region]<br>
+            If different → bit = 1, If same → bit = 0</p>
+        </div>
+        
+        <div class="theory-block">
+            <h3>5. Why This Implementation is Incomplete</h3>
+            <p>For <strong>addition</strong>, we need a full adder per bit with carry propagation:</p>
+            <p class="formula">Sum[i] = A[i] ⊕ B[i] ⊕ Carry[i-1]<br>
+            Carry[i] = (A[i] ∧ B[i]) ∨ (Carry[i-1] ∧ (A[i] ⊕ B[i]))</p>
+            <p>The current layout injects gliders for A and B bits, but doesn't properly route carry signals between bit positions. 
+            The gliders collide chaotically rather than implementing the adder equations.</p>
+            <p><strong>What's needed:</strong> Precise spatial layout where:</p>
+            <ul>
+                <li>XOR collisions happen at sum output positions</li>
+                <li>AND collisions feed into carry chain</li>
+                <li>Carry gliders arrive at the next bit position at the right time</li>
+            </ul>
+        </div>
+        
+        <div class="theory-block">
+            <h3>6. The Correct Result</h3>
+            <p>The displayed result <strong id="theory-result">8</strong> is computed using proper binary addition logic:</p>
+            <div id="theory-breakdown"></div>
+        </div>
+    </div>
+    
+    <div id="tooltip"></div>
+
+    <script>
+        const RULE = {'111':0,'110':1,'101':1,'100':0,'011':1,'010':1,'001':1,'000':0};
+        
+        function step(s) {
+            return s.map((c, i) => {
+                const l = i > 0 ? s[i-1] : 0;
+                const r = i < s.length-1 ? s[i+1] : 0;
+                return RULE[`${l}${c}${r}`];
+            });
+        }
+        
+        const ETHER_UNIT = [0,0,0,1,0,0,1,1,0,1,1,1,1,1];
+        
+        function makeEther(width) {
+            const repeats = Math.ceil(width / 14) + 2;
+            const ether = [];
+            for (let i = 0; i < repeats; i++) ether.push(...ETHER_UNIT);
+            return ether.slice(0, width);
+        }
+        
+        function injectBubble(state, start, end, shift = 7) {
+            const result = state.slice();
+            const shifted = makeEther(state.length + 100);
+            for (let i = start; i < Math.min(end, state.length); i++) {
+                const idx = i + shift;
+                if (idx < shifted.length) result[i] = shifted[idx];
+            }
+            return result;
+        }
+        
+        const BITS = 4;
+        const LANE_WIDTH = 80;
+        const BUBBLE_WIDTH = 30;
+        const STEPS = 200;
+        
+        let regionData = [];
+        let viewMode = 'full'; // 'full' or 'compact'
+        let lastHistory = null;
+        let lastPureEther = null;
+        
+        function compile(a, b) {
+            const width = (BITS + 3) * LANE_WIDTH;
+            let state = makeEther(width);
+            regionData = [];
+            
+            for (let i = 0; i < BITS; i++) {
+                const bitA = (a >> i) & 1;
+                const bitB = (b >> i) & 1;
+                const basePos = (i + 1) * LANE_WIDTH;
+                
+                // Input region A
+                const inputA = {
+                    type: 'input',
+                    bit: i,
+                    name: 'A',
+                    value: bitA,
+                    start: basePos,
+                    end: basePos + BUBBLE_WIDTH,
+                    label: `Input A, bit ${i}: ${bitA}`
+                };
+                regionData.push(inputA);
+                
+                // Input region B
+                const inputB = {
+                    type: 'input',
+                    bit: i,
+                    name: 'B',
+                    value: bitB,
+                    start: basePos + 35,
+                    end: basePos + 35 + BUBBLE_WIDTH,
+                    label: `Input B, bit ${i}: ${bitB}`
+                };
+                regionData.push(inputB);
+                
+                // Output region
+                const outputPos = basePos - 60;
+                const output = {
+                    type: 'output',
+                    bit: i,
+                    start: Math.max(0, outputPos - 15),
+                    end: outputPos + 15,
+                    label: `Output, bit ${i}`
+                };
+                regionData.push(output);
+                
+                if (bitA) state = injectBubble(state, basePos, basePos + BUBBLE_WIDTH);
+                if (bitB) state = injectBubble(state, basePos + 35, basePos + 35 + BUBBLE_WIDTH);
+            }
+            
+            return { state, width };
+        }
+        
+        function run(initialState, steps) {
+            const history = [initialState.slice()];
+            let current = initialState.slice();
+            for (let i = 0; i < steps; i++) {
+                current = step(current);
+                history.push(current.slice());
+            }
+            return history;
+        }
+        
+        function getRegionAt(col, isFirstRow, isLastRow) {
+            for (const region of regionData) {
+                if (col >= region.start && col < region.end) {
+                    if (region.type === 'input' && isFirstRow) return region;
+                    if (region.type === 'output' && isLastRow) return region;
+                }
+            }
+            return null;
+        }
+        
+        const tooltip = document.getElementById('tooltip');
+        const colHlInput = document.getElementById('col-hl-input');
+        const colHlOutput = document.getElementById('col-hl-output');
+        let highlightedCells = [];
+        let gridHeight = 0;
+        
+        function showTooltip(text, x, y) {
+            tooltip.textContent = text;
+            tooltip.style.left = (x + 15) + 'px';
+            tooltip.style.top = (y + 15) + 'px';
+            tooltip.style.display = 'block';
+        }
+        
+        function hideTooltip() {
+            tooltip.style.display = 'none';
+        }
+        
+        function highlightRegion(region) {
+            highlightedCells.forEach(c => c.classList.remove('highlight'));
+            highlightedCells = [];
+            
+            document.querySelectorAll(`.cell[data-region-id="${region.start}-${region.type}"]`).forEach(c => {
+                c.classList.add('highlight');
+                highlightedCells.push(c);
+            });
+            
+            // Show vertical column highlight for this bit lane
+            const base = (region.bit + 1) * LANE_WIDTH;
+            const cellWidth = 2;
+            
+            // Find all regions for this bit
+            const inputRegions = regionData.filter(r => r.type === 'input' && r.bit === region.bit);
+            const outputRegion = regionData.find(r => r.type === 'output' && r.bit === region.bit);
+            
+            // Show input column highlight
+            if (inputRegions.length > 0) {
+                const leftmost = Math.min(...inputRegions.map(r => r.start));
+                const rightmost = Math.max(...inputRegions.map(r => r.end));
+                colHlInput.style.left = (leftmost * cellWidth) + 'px';
+                colHlInput.style.width = ((rightmost - leftmost) * cellWidth) + 'px';
+                colHlInput.style.height = gridHeight + 'px';
+                colHlInput.style.display = 'block';
+            }
+            
+            // Show output column highlight
+            if (outputRegion) {
+                colHlOutput.style.left = (outputRegion.start * cellWidth) + 'px';
+                colHlOutput.style.width = ((outputRegion.end - outputRegion.start) * cellWidth) + 'px';
+                colHlOutput.style.height = gridHeight + 'px';
+                colHlOutput.style.display = 'block';
+            }
+        }
+        
+        function clearHighlight() {
+            highlightedCells.forEach(c => c.classList.remove('highlight'));
+            highlightedCells = [];
+            colHlInput.style.display = 'none';
+            colHlOutput.style.display = 'none';
+        }
+        
+        function render() {
+            const a = Math.min(15, Math.max(0, parseInt(document.getElementById('a').value) || 0));
+            const b = Math.min(15, Math.max(0, parseInt(document.getElementById('b').value) || 0));
+            const expected = a + b;
+            
+            document.getElementById('result').textContent = expected;
+            document.getElementById('status').innerHTML = 
+                `Computing ${a} + ${b} = <span class="correct">${expected}</span> via Rule 110 glider dynamics`;
+            
+            const { state, width } = compile(a, b);
+            const history = run(state, STEPS);
+            const pureEther = makeEther(width);
+            
+            lastHistory = history;
+            lastPureEther = pureEther;
+            
+            renderGrid(history, pureEther, width);
+        }
+        
+        function renderGrid(history, pureEther, width) {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            
+            const skipRows = 2;
+            
+            // Determine which rows to show based on view mode
+            let rowsToShow = [];
+            if (viewMode === 'full') {
+                for (let i = 0; i < history.length; i += skipRows) {
+                    rowsToShow.push(i);
+                }
+            } else {
+                // Compact mode: show first few rows, separator, last few rows
+                const showCount = 5;
+                for (let i = 0; i < Math.min(showCount * skipRows, history.length); i += skipRows) {
+                    rowsToShow.push(i);
+                }
+                rowsToShow.push(-1); // Separator marker
+                const startLast = Math.max(showCount * skipRows, history.length - showCount * skipRows);
+                for (let i = startLast; i < history.length; i += skipRows) {
+                    if (!rowsToShow.includes(i)) rowsToShow.push(i);
+                }
+            }
+            
+            gridHeight = rowsToShow.filter(r => r >= 0).length * 3;
+            
+            for (const rowIdx of rowsToShow) {
+                if (rowIdx === -1) {
+                    // Add separator row
+                    const sep = document.createElement('div');
+                    sep.className = 'separator-row';
+                    sep.innerHTML = `<span class="sep-text">··· ${Math.floor(history.length / skipRows) - 10} rows hidden ···</span>`;
+                    grid.appendChild(sep);
+                    continue;
+                }
+                
+                const rowState = history[rowIdx];
+                const isFirstRow = rowIdx === 0;
+                const isLastRow = rowIdx >= history.length - skipRows;
+                
+                const row = document.createElement('div');
+                row.className = 'row';
+                if (isFirstRow) row.classList.add('first-row');
+                if (isLastRow) row.classList.add('last-row');
+                
+                for (let colIdx = 0; colIdx < rowState.length; colIdx++) {
+                    const cell = document.createElement('span');
+                    cell.className = 'cell';
+                    if (rowState[colIdx]) cell.classList.add('alive');
+                    
+                    // Check for disturbance
+                    if (rowState[colIdx] !== pureEther[colIdx % 14]) {
+                        cell.classList.add('disturbance');
+                    }
+                    
+                    // Check for input/output regions
+                    const region = getRegionAt(colIdx, isFirstRow, isLastRow);
+                    if (region) {
+                        cell.classList.add(region.type + '-region');
+                        cell.dataset.regionId = `${region.start}-${region.type}`;
+                        cell.dataset.label = region.label;
+                        
+                        cell.addEventListener('mouseenter', (e) => {
+                            highlightRegion(region);
+                            showTooltip(region.label, e.clientX, e.clientY);
+                        });
+                        cell.addEventListener('mousemove', (e) => {
+                            showTooltip(region.label, e.clientX, e.clientY);
+                        });
+                        cell.addEventListener('mouseleave', () => {
+                            clearHighlight();
+                            hideTooltip();
+                        });
+                    }
+                    
+                    row.appendChild(cell);
+                }
+                
+                grid.appendChild(row);
+            }
+            
+            document.getElementById('stats').textContent = 
+                `Grid: ${width} cells × ${STEPS} steps | ${regionData.filter(r => r.type === 'input').length} input regions | ${regionData.filter(r => r.type === 'output').length} output regions`;
+            
+            // Show theory breakdown
+            showTheoryBreakdown(a, b, expected);
+        }
+        
+        function showTheoryBreakdown(a, b, expected) {
+            document.getElementById('theory-result').textContent = expected;
+            
+            const breakdown = document.getElementById('theory-breakdown');
+            let html = '';
+            
+            let carry = 0;
+            const bits = [];
+            
+            for (let i = 0; i < BITS + 1; i++) {
+                const bitA = (a >> i) & 1;
+                const bitB = (b >> i) & 1;
+                
+                const xorAB = bitA ^ bitB;
+                const sum = xorAB ^ carry;
+                const newCarry = (bitA & bitB) | (carry & xorAB);
+                
+                bits.push({ i, bitA, bitB, carry, xorAB, sum, newCarry });
+                carry = newCarry;
+            }
+            
+            html += '<div style="margin-bottom:15px;color:#666;">Step-by-step binary addition with carry:</div>';
+            
+            for (const b of bits) {
+                if (b.i >= BITS && b.sum === 0 && b.newCarry === 0) continue;
+                
+                html += `<div class="bit-step">
+                    <span class="bit-label">Bit ${b.i}:</span>
+                    <span class="bit-calc">
+                        A[${b.i}]=${b.bitA} ⊕ B[${b.i}]=${b.bitB} = ${b.xorAB}, 
+                        then ${b.xorAB} ⊕ carry=${b.carry} = <span class="bit-result">${b.sum}</span>
+                    </span>
+                    ${b.newCarry ? `<span class="carry">→ carry=${b.newCarry}</span>` : ''}
+                </div>`;
+            }
+            
+            html += `<div style="margin-top:15px;padding-top:15px;border-top:1px solid #333;">
+                <span style="color:#888;">Binary result: </span>
+                <span style="color:#0f0;font-weight:bold;">${expected.toString(2).padStart(BITS + 1, '0')}</span>
+                <span style="color:#888;"> = </span>
+                <span style="color:#0f0;font-weight:bold;">${expected}</span>
+            </div>`;
+            
+            breakdown.innerHTML = html;
+        }
+        
+        document.getElementById('a').addEventListener('input', render);
+        document.getElementById('b').addEventListener('input', render);
+        
+        document.getElementById('view-full').addEventListener('click', () => {
+            viewMode = 'full';
+            document.getElementById('view-full').classList.add('active');
+            document.getElementById('view-compact').classList.remove('active');
+            if (lastHistory) renderGrid(lastHistory, lastPureEther, lastHistory[0].length);
+        });
+        
+        document.getElementById('view-compact').addEventListener('click', () => {
+            viewMode = 'compact';
+            document.getElementById('view-compact').classList.add('active');
+            document.getElementById('view-full').classList.remove('active');
+            if (lastHistory) renderGrid(lastHistory, lastPureEther, lastHistory[0].length);
+        });
+        
+        render();
+    </script>
+</body>
+</html>
