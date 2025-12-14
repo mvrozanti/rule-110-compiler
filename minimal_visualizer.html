@@ -261,6 +261,104 @@
             border-radius: 3px;
             font-size: 12px;
         }
+        
+        /* Full computation modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+            overflow: auto;
+        }
+        
+        .modal.show { display: block; }
+        
+        .modal-header {
+            position: sticky;
+            top: 0;
+            background: #0a0a0f;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #222;
+            z-index: 10;
+        }
+        
+        .modal-header h2 {
+            font-size: 14px;
+            font-weight: normal;
+            color: #fff;
+        }
+        
+        .modal-header .close-btn {
+            background: none;
+            border: 1px solid #444;
+            color: #888;
+            padding: 5px 15px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .modal-header .close-btn:hover {
+            color: #fff;
+            border-color: #666;
+        }
+        
+        .modal-content {
+            padding: 20px;
+        }
+        
+        .full-grid-container {
+            background: #000;
+            display: inline-block;
+            padding: 10px;
+        }
+        
+        .full-grid {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .full-row {
+            display: flex;
+            height: 2px;
+        }
+        
+        .full-cell {
+            width: 1px;
+            height: 2px;
+            background: #111;
+        }
+        
+        .full-cell.alive { background: #3a7; }
+        .full-cell.xor { background: #08a; }
+        .full-cell.xor.alive { background: #0cf; }
+        .full-cell.and { background: #a60; }
+        .full-cell.and.alive { background: #fa0; }
+        .full-cell.or { background: #80a; }
+        .full-cell.or.alive { background: #c0f; }
+        
+        .computation-stats {
+            margin-bottom: 15px;
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .computation-stats strong { color: #fff; }
+        
+        .gate-separator {
+            height: 1px;
+            background: #333;
+        }
+        
+        .download-btn {
+            margin-left: 15px;
+        }
     </style>
 </head>
 <body>
@@ -322,7 +420,25 @@ print result</textarea>
                     <h3>Rule 110 Gates Executed</h3>
                     <div class="gate-count" id="gate-count"></div>
                     <div class="mini-gates" id="gates-viz"></div>
+                    <button class="btn" id="show-full-btn" onclick="showFullComputation()" style="margin-top:10px">Show Full Computation</button>
                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="modal">
+        <div class="modal-header">
+            <h2>Full Rule 110 Computation</h2>
+            <div>
+                <span id="modal-stats"></span>
+                <button class="btn download-btn" onclick="downloadImage()">Download PNG</button>
+                <button class="close-btn" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+        <div class="modal-content">
+            <div class="computation-stats" id="comp-stats"></div>
+            <div class="full-grid-container">
+                <canvas id="full-canvas"></canvas>
             </div>
         </div>
     </div>
@@ -358,15 +474,26 @@ print result</textarea>
         };
         
         let gateLog = [];
+        let gateHistories = [];
+        
+        function r110RunWithHistory(state, steps) {
+            const history = [state.slice()];
+            for (let i = 0; i < steps; i++) {
+                state = r110Step(state);
+                history.push(state.slice());
+            }
+            return { final: state, history };
+        }
         
         function gate(type, a, b) {
             const cfg = GATE_CONFIGS[type];
             const state = new Array(cfg.width).fill(0);
             state[cfg.pos[0]] = a;
             state[cfg.pos[1]] = b;
-            const result = r110Run(state, cfg.steps);
-            gateLog.push({ type, inputs: [a, b], output: result[cfg.out] });
-            return result[cfg.out];
+            const { final, history } = r110RunWithHistory(state, cfg.steps);
+            gateLog.push({ type, inputs: [a, b], output: final[cfg.out] });
+            gateHistories.push({ type, history, width: cfg.width });
+            return final[cfg.out];
         }
         
         const Gate = {
@@ -662,6 +789,7 @@ print result</textarea>
                 this.output = [];
                 this.labels = {};
                 gateLog = [];
+                gateHistories = [];
                 
                 insts.forEach((inst, i) => {
                     if (inst.op === 'LABEL') this.labels[inst.args[0]] = i;
@@ -839,6 +967,104 @@ print sum`
                 outputDiv.innerHTML = '';
             }
         }
+        
+        function showFullComputation() {
+            if (gateHistories.length === 0) {
+                alert('No computation to show. Run a program first.');
+                return;
+            }
+            
+            // Limit to first 500 gates for performance
+            const maxGates = 500;
+            const histories = gateHistories.slice(0, maxGates);
+            const truncated = gateHistories.length > maxGates;
+            
+            // Calculate dimensions
+            const gateWidth = 40; // pixels per gate width
+            const rowHeight = 2;
+            const gapBetweenGates = 1;
+            
+            // Arrange gates in a grid
+            const gatesPerRow = Math.ceil(Math.sqrt(histories.length * 2));
+            const numRows = Math.ceil(histories.length / gatesPerRow);
+            
+            // Find max steps and width
+            const maxSteps = Math.max(...histories.map(h => h.history.length));
+            const maxWidth = Math.max(...histories.map(h => h.width));
+            
+            const cellW = 2;
+            const cellH = 2;
+            const gatePixelWidth = maxWidth * cellW + gapBetweenGates;
+            const gatePixelHeight = maxSteps * cellH + gapBetweenGates;
+            
+            const canvasWidth = gatesPerRow * gatePixelWidth;
+            const canvasHeight = numRows * gatePixelHeight;
+            
+            const canvas = document.getElementById('full-canvas');
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+            const ctx = canvas.getContext('2d');
+            
+            // Background
+            ctx.fillStyle = '#0a0a0f';
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+            
+            // Colors by gate type
+            const colors = {
+                XOR: { bg: '#001828', alive: '#0af' },
+                AND: { bg: '#281800', alive: '#fa0' },
+                OR: { bg: '#180028', alive: '#c0f' }
+            };
+            
+            // Draw each gate
+            histories.forEach((gate, idx) => {
+                const col = idx % gatesPerRow;
+                const row = Math.floor(idx / gatesPerRow);
+                const offsetX = col * gatePixelWidth;
+                const offsetY = row * gatePixelHeight;
+                
+                const { bg, alive } = colors[gate.type];
+                
+                gate.history.forEach((state, step) => {
+                    state.forEach((cell, x) => {
+                        const px = offsetX + x * cellW;
+                        const py = offsetY + step * cellH;
+                        ctx.fillStyle = cell ? alive : bg;
+                        ctx.fillRect(px, py, cellW - 0.5, cellH - 0.5);
+                    });
+                });
+            });
+            
+            // Update stats
+            const totalCells = histories.reduce((sum, g) => sum + g.history.length * g.width, 0);
+            document.getElementById('comp-stats').innerHTML = 
+                `<strong>${histories.length}</strong> gate computations` +
+                (truncated ? ` (showing first ${maxGates} of ${gateHistories.length})` : '') +
+                ` | <strong>${totalCells.toLocaleString()}</strong> total CA cells computed` +
+                ` | Canvas: ${canvasWidth} × ${canvasHeight} pixels`;
+            
+            document.getElementById('modal-stats').textContent = 
+                `${histories.length} gates`;
+            
+            document.getElementById('modal').classList.add('show');
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').classList.remove('show');
+        }
+        
+        function downloadImage() {
+            const canvas = document.getElementById('full-canvas');
+            const link = document.createElement('a');
+            link.download = 'rule110-computation.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        // Close modal on escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
         
         // Initial compile
         compile();
