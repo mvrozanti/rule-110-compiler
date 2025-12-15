@@ -86,8 +86,22 @@ class Rule110Visualizer:
             
             if op == 'not':
                 initial_state, offset, bits = executor.op_compiler.compile_boolean_op(op, args[0])
+                highlight_regions = [
+                    (0, 1),  # input
+                    (offset, offset + bits)  # output
+                ]
             else:
                 initial_state, offset, bits = executor.op_compiler.compile_boolean_op(op, args[0], args[1])
+                # Derive approximate regions based on known layout from compile_boolean_op
+                if op == 'and':
+                    start_b = 1 + 2 + 3  # a + padding + separator
+                else:
+                    start_b = 1 + 1 + 3  # a + padding + separator
+                highlight_regions = [
+                    (0, 1),  # input A
+                    (start_b, start_b + 1),  # input B
+                    (offset, offset + bits)  # output
+                ]
         
         elif operation_code.startswith('arith:'):
             # Parse arithmetic operation
