@@ -3,7 +3,7 @@ import pytest
 from cook_cts_encoder import default_unary_duplicator, encode_cts
 from cts_scheduler import schedule_packages, MIN_SPACING
 from cook_gliders import PackagePlacement
-from cts_executor import run_cts, extract_queue_slice, active_counts
+from cts_executor import run_cts, extract_queue_slice, active_counts, queue_window
 
 
 def test_encode_cts_not_empty():
@@ -49,3 +49,11 @@ def test_extract_queue_slice_and_counts():
     counts = active_counts(result.history)
     assert len(counts) == 11
     assert all(c >= 0 for c in counts)
+
+
+def test_queue_window_signature_stable():
+    result = run_cts(steps=12)
+    # Take a small window around the middle; ensure length and shape are stable
+    win = queue_window(result.history, center=10, radius=5)
+    assert len(win) == len(result.history)
+    assert all(len(row) == 10 for row in win[:-1]) or all(len(row) in (9, 10) for row in win)  # tolerate edge

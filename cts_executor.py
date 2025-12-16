@@ -35,3 +35,12 @@ def extract_queue_slice(history: List[List[int]], window: Tuple[int, int]) -> Li
 def active_counts(history: List[List[int]]) -> List[int]:
     """Return active (1-bit) counts per step for quick regression checks."""
     return [sum(state) for state in history]
+
+
+def queue_window(history: List[List[int]], center: int, radius: int) -> List[List[int]]:
+    """
+    Extract a window around a center index across history.
+    """
+    start = max(center - radius, 0)
+    end = center + radius
+    return [state[start:end] for state in history]
