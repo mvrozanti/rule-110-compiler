@@ -66,6 +66,17 @@ class TestCookExecutor(unittest.TestCase):
         self.assertIn(left_val, (0, 1))
         self.assertIn(right_val, (0, 1))
 
+    def test_dynamic_growth_uses_ether_chunk(self):
+        chunk = len(ETHER_BASE)
+        ca = DynamicRule110([1], boundary="ether", grow_margin=1, grow_chunk=chunk)
+        ca.run(2)
+        # Growth should prepend/append ether chunk; ensure length increased and boundary uses ether values
+        self.assertGreaterEqual(len(ca.get_state()), 1 + chunk)
+        left_val = ca._boundary_value(-1)
+        right_val = ca._boundary_value(len(ca.get_state()))
+        self.assertIn(left_val, (0, 1))
+        self.assertIn(right_val, (0, 1))
+
 
 if __name__ == "__main__":
     unittest.main()

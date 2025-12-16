@@ -27,6 +27,13 @@ def test_scheduler_spacing_fail():
     assert any("Gap too small" in w for w in result.warnings)
 
 
+def test_encode_cts_rejects_too_small_spacing():
+    spec = default_unary_duplicator()
+    spec.spacing = MIN_SPACING - 1
+    with pytest.raises(ValueError):
+        encode_cts(spec)
+
+
 def test_run_cts_produces_history():
     result = run_cts(steps=50)
     assert len(result.history) == 51  # includes initial

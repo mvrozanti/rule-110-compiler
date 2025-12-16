@@ -56,18 +56,18 @@ def _queue_packages(spec: CTSSpec) -> List[PackagePlacement]:
         pkg_name = spec.symbol_map.get(symbol) or spec.symbol_map.get("1") or "A"
         if not pkg_name:
             raise ValueError(f"No package mapped for symbol '{symbol}'")
-        placements.append(PackagePlacement(pkg_name, cursor, phase=cursor % len(GLIDER_PACKAGES[pkg_name])))
+        placements.append(PackagePlacement(pkg_name, cursor, phase=cursor % PHASE_MOD))
         cursor += spec.spacing
     # delimiter after queue
-    placements.append(PackagePlacement(spec.delimiter_package, cursor, phase=cursor))
+    placements.append(PackagePlacement(spec.delimiter_package, cursor, phase=cursor % PHASE_MOD))
     cursor += spec.spacing
     # rule block as repeated packages for now
     for rule in spec.rules:
         for sym in rule.production:
             pkg_name = spec.symbol_map.get(sym)
-            placements.append(PackagePlacement(pkg_name, cursor, phase=cursor))
+            placements.append(PackagePlacement(pkg_name, cursor, phase=cursor % PHASE_MOD))
             cursor += spec.spacing
-        placements.append(PackagePlacement(spec.delimiter_package, cursor, phase=cursor))
+        placements.append(PackagePlacement(spec.delimiter_package, cursor, phase=cursor % PHASE_MOD))
         cursor += spec.spacing
     return placements
 
@@ -79,8 +79,10 @@ def encode_cts(spec: CTSSpec) -> CTSEncoding:
         placements,
         min_gap=max(spec.spacing // 2, MIN_SPACING),
         phase_mod=PHASE_MOD,
-        strict=False,
+        strict=True,
     )
+    if not sched.valid:
+        raise ValueError(f"Invalid CTS schedule: {sched.warnings}")
     tape, applied = build_base_tape(spec.ether_length, sched.placements)
     return CTSEncoding(initial_state=tape, placements=applied, schedule_warnings=sched.warnings)
 
