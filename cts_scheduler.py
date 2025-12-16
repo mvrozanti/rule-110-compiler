@@ -2,10 +2,10 @@
 from dataclasses import dataclass
 from typing import List, Tuple
 
-from cook_gliders import PackagePlacement, ETHER_BASE
+from cook_gliders import PackagePlacement, ETHER_BASE, PHASE_MOD, max_package_len
 
 # Minimal safe gap between packages (heuristic; Cook spacing is phase-sensitive).
-MIN_SPACING = 6
+MIN_SPACING = max_package_len()
 
 
 @dataclass
@@ -15,7 +15,7 @@ class ScheduleResult:
     valid: bool
 
 
-def schedule_packages(packages: List[PackagePlacement], min_gap: int = MIN_SPACING, phase_mod: int = None) -> ScheduleResult:
+def schedule_packages(packages: List[PackagePlacement], min_gap: int = MIN_SPACING, phase_mod: int = None, strict: bool = True) -> ScheduleResult:
     """
     Ensure package ordering, spacing, and (optionally) phase alignment.
 
@@ -23,12 +23,13 @@ def schedule_packages(packages: List[PackagePlacement], min_gap: int = MIN_SPACI
         packages: placements with desired offsets
         min_gap: minimal cell gap between consecutive packages
         phase_mod: optional modulus for phase consistency (defaults to ether period)
+        strict: if True, invalid spacing/phase marks schedule invalid
     """
     warnings: List[str] = []
     if not packages:
         return ScheduleResult([], ["No packages supplied"], False)
 
-    phase_mod = phase_mod or len(ETHER_BASE)
+    phase_mod = phase_mod or PHASE_MOD
     ordered = sorted(packages, key=lambda p: p.offset)
     valid = True
 
@@ -41,5 +42,8 @@ def schedule_packages(packages: List[PackagePlacement], min_gap: int = MIN_SPACI
         if p.phase % phase_mod != ordered[0].phase % phase_mod:
             warnings.append(f"Phase mismatch on {p.name}: {p.phase} vs base phase {ordered[0].phase}")
             valid = False
+
+    if strict and not valid:
+        warnings.append("Schedule marked invalid under strict mode.")
 
     return ScheduleResult(ordered, warnings, valid)

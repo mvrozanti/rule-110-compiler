@@ -1,17 +1,19 @@
 """Helpers for Cook-style ether and glider packages.
 
-This is a pragmatic approximation to the packages described in
-Cook (2004), enough to let us place ether, inject packages, and
-validate spacing/phase when building CTS initial states.
+Patterns below follow the canonical 14-cell ether described by Cook (2004).
+Glider packages are pragmatic placeholders (A/B/C/D + delimiter) structured to
+allow spacing/phase validation; replace with measured patterns when available.
 """
 from dataclasses import dataclass
 from typing import List, Dict, Tuple
 
 # Ether pattern: canonical 14-cell period for Rule 110 ether (Cook, 2004).
+# Ether repeats every 14 cells; phase alignment is always mod 14.
 ETHER_BASE: List[int] = [0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0]
+PHASE_MOD = len(ETHER_BASE)
 
-# Canonical package snippets (approximations of Cook’s A/B/C/D glider packages).
-# These are placeholders to keep structure; refine with measured patterns if available.
+# Package snippets (structured placeholders). Swap with empirically measured
+# packages to reach full fidelity; lengths are kept short for scheduling tests.
 GLIDER_PACKAGES: Dict[str, List[int]] = {
     "A": [1, 1, 0, 1, 1, 0, 0, 1, 0],
     "B": [1, 0, 1, 1, 0, 0, 1, 1],
@@ -72,3 +74,8 @@ def build_initial_state(packages: List[Tuple[str, int, int]], ether_periods: int
     placements = [PackagePlacement(name, offset, phase) for name, offset, phase in packages]
     tape, _ = build_base_tape(length, placements)
     return tape
+
+
+def max_package_len() -> int:
+    """Return the maximum package length (for spacing heuristics)."""
+    return max(len(pkg) for pkg in GLIDER_PACKAGES.values())

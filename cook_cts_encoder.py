@@ -2,8 +2,8 @@
 from dataclasses import dataclass, field
 from typing import List, Dict, Tuple, Optional
 
-from cook_gliders import GLIDER_PACKAGES, PackagePlacement, build_base_tape, ETHER_BASE
-from cts_scheduler import schedule_packages, MIN_SPACING
+from cook_gliders import GLIDER_PACKAGES, PackagePlacement, build_base_tape, ETHER_BASE, max_package_len, PHASE_MOD
+from cts_scheduler import schedule_packages, MIN_SPACING, ScheduleResult
 
 
 @dataclass
@@ -73,7 +73,35 @@ def _queue_packages(spec: CTSSpec) -> List[PackagePlacement]:
 
 
 def encode_cts(spec: CTSSpec) -> CTSEncoding:
+    _validate_spec(spec)
     placements = _queue_packages(spec)
-    sched = schedule_packages(placements, min_gap=spec.spacing // 2)
+    sched: ScheduleResult = schedule_packages(
+        placements,
+        min_gap=max(spec.spacing // 2, MIN_SPACING),
+        phase_mod=PHASE_MOD,
+        strict=False,
+    )
     tape, applied = build_base_tape(spec.ether_length, sched.placements)
     return CTSEncoding(initial_state=tape, placements=applied, schedule_warnings=sched.warnings)
+
+
+def _validate_spec(spec: CTSSpec) -> None:
+    if spec.spacing < MIN_SPACING:
+        raise ValueError(f"spacing {spec.spacing} too small; need >= {MIN_SPACING}")
+    if spec.delimiter_package not in GLIDER_PACKAGES:
+        raise ValueError(f"delimiter '{spec.delimiter_package}' missing from GLIDER_PACKAGES")
+    if not spec.queue:
+        raise ValueError("CTS queue must not be empty")
+    if not spec.rules:
+        raise ValueError("CTS rules must not be empty")
+
+    # Ensure all symbols map to packages
+    for symbol in spec.queue:
+        if symbol not in spec.symbol_map:
+            raise ValueError(f"No package mapping for queue symbol '{symbol}'")
+    for rule in spec.rules:
+        if rule.symbol not in spec.symbol_map:
+            raise ValueError(f"No package mapping for rule symbol '{rule.symbol}'")
+        for prod_sym in rule.production:
+            if prod_sym not in spec.symbol_map:
+                raise ValueError(f"No package mapping for production symbol '{prod_sym}'")
