@@ -2,7 +2,7 @@
 from dataclasses import dataclass
 from typing import List, Tuple
 
-from cook_gliders import PackagePlacement, ETHER_BASE, PHASE_MOD, max_package_len
+from cook_gliders import PackagePlacement, ETHER_BASE, PHASE_MOD, max_package_len, GLIDER_PACKAGES
 
 # Minimal safe gap between packages (heuristic; Cook spacing is phase-sensitive).
 MIN_SPACING = max_package_len()
@@ -21,7 +21,7 @@ def schedule_packages(packages: List[PackagePlacement], min_gap: int = MIN_SPACI
 
     Args:
         packages: placements with desired offsets
-        min_gap: minimal cell gap between consecutive packages
+        min_gap: minimal cell gap between consecutive packages (after package length)
         phase_mod: optional modulus for phase consistency (defaults to ether period)
         strict: if True, invalid spacing/phase marks schedule invalid
     """
@@ -34,9 +34,16 @@ def schedule_packages(packages: List[PackagePlacement], min_gap: int = MIN_SPACI
     valid = True
 
     for i in range(1, len(ordered)):
-        gap = ordered[i].offset - (ordered[i - 1].offset + 1)
+        prev = ordered[i - 1]
+        curr = ordered[i]
+        prev_len = len(GLIDER_PACKAGES.get(prev.name, []))
+        curr_len = len(GLIDER_PACKAGES.get(curr.name, []))
+        prev_end = prev.offset + max(prev_len, 1) - 1
+        gap = curr.offset - prev_end - 1
         if gap < min_gap:
-            warnings.append(f"Gap too small between {ordered[i-1].name} and {ordered[i].name}: {gap} < {min_gap}")
+            warnings.append(
+                f"Gap too small between {prev.name} (end {prev_end}) and {curr.name} (start {curr.offset}): {gap} < {min_gap}"
+            )
             valid = False
     for p in ordered:
         if p.phase % phase_mod != ordered[0].phase % phase_mod:

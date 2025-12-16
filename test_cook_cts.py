@@ -1,8 +1,8 @@
 import pytest
 
-from cook_cts_encoder import default_unary_duplicator, encode_cts
+from cook_cts_encoder import default_unary_duplicator, encode_cts, cts_example_small
 from cts_scheduler import schedule_packages, MIN_SPACING
-from cook_gliders import PackagePlacement
+from cook_gliders import PackagePlacement, GLIDER_PACKAGES
 from cts_executor import run_cts, extract_queue_slice, active_counts, queue_window
 
 
@@ -22,6 +22,18 @@ def test_scheduler_spacing_ok():
 
 def test_scheduler_spacing_fail():
     placements = [PackagePlacement("A", 10), PackagePlacement("B", 12)]
+    result = schedule_packages(placements, min_gap=MIN_SPACING)
+    assert result.valid is False
+    assert any("Gap too small" in w for w in result.warnings)
+
+
+def test_scheduler_detects_overlap_by_length():
+    # B placed inside length of A
+    a_len = len(GLIDER_PACKAGES["A"])
+    placements = [
+        PackagePlacement("A", 10),
+        PackagePlacement("B", 10 + a_len - 2),  # overlaps by 2 cells
+    ]
     result = schedule_packages(placements, min_gap=MIN_SPACING)
     assert result.valid is False
     assert any("Gap too small" in w for w in result.warnings)
@@ -57,3 +69,14 @@ def test_queue_window_signature_stable():
     win = queue_window(result.history, center=10, radius=5)
     assert len(win) == len(result.history)
     assert all(len(row) == 10 for row in win[:-1]) or all(len(row) in (9, 10) for row in win)  # tolerate edge
+
+
+def test_cts_example_small_encodes_and_runs():
+    spec = cts_example_small()
+    encoding = encode_cts(spec)
+    assert encoding.initial_state
+    result = run_cts(spec, steps=12)
+    assert len(result.history) == 13
+    counts = active_counts(result.history)
+    assert len(counts) == 13
+    assert all(c >= 0 for c in counts)

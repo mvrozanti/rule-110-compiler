@@ -49,6 +49,20 @@ def default_unary_duplicator() -> CTSSpec:
     return CTSSpec(queue=["1"], rules=rules)
 
 
+def cts_example_small() -> CTSSpec:
+    """
+    Simple CTS with two symbols to use as a regression fixture.
+    Production:
+      X -> XY
+      Y -> X
+    """
+    rules = [
+        CTSRule(symbol="X", production=["X", "Y"]),
+        CTSRule(symbol="Y", production=["X"]),
+    ]
+    return CTSSpec(queue=["X"], rules=rules)
+
+
 def _queue_packages(spec: CTSSpec) -> List[PackagePlacement]:
     placements: List[PackagePlacement] = []
     cursor = spec.spacing
@@ -75,9 +89,10 @@ def _queue_packages(spec: CTSSpec) -> List[PackagePlacement]:
 def encode_cts(spec: CTSSpec) -> CTSEncoding:
     _validate_spec(spec)
     placements = _queue_packages(spec)
+    min_gap = max(3, spec.spacing - max_package_len())
     sched: ScheduleResult = schedule_packages(
         placements,
-        min_gap=max(spec.spacing // 2, MIN_SPACING),
+        min_gap=min_gap,
         phase_mod=PHASE_MOD,
         strict=True,
     )
