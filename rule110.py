@@ -12,32 +12,56 @@ Rule 110 is Turing complete and defined by the following transition table:
   000 -> 0
 """
 
+from typing import List
+
+try:
+    from cook_gliders import ETHER_BASE
+except Exception:
+    ETHER_BASE = [0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1]
+
 
 class Rule110:
     """Simulator for Rule 110 Elementary Cellular Automaton"""
     
-    def __init__(self, initial_state):
+    def __init__(self, initial_state, boundary='zero', ether_pattern=None, pad=0):
         """
         Initialize Rule 110 with an initial state.
         
         Args:
             initial_state: List of 0s and 1s representing the initial cell states
+            boundary: Boundary condition ('zero' or 'ether')
+            ether_pattern: Pattern to use when boundary='ether'
+            pad: Optional extra padding to add once at start
         """
-        self.state = list(initial_state)
+        self.boundary = boundary
+        self.ether_pattern = ether_pattern or [1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0]
+        self.pad = pad
+        self.state = (list(initial_state) if pad == 0
+                      else [0] * pad + list(initial_state) + [0] * pad)
         self.history = [list(self.state)]
     
     def step(self):
         """Execute one step of Rule 110"""
         next_state = []
+        pad = 3  # small halo for expansion
         n = len(self.state)
         
-        for i in range(n):
-            # Get the neighborhood: left, center, right
-            left = self.state[(i - 1) % n] if i > 0 else 0
-            center = self.state[i]
-            right = self.state[(i + 1) % n] if i < n - 1 else 0
-            
-            # Apply Rule 110
+        # Build working state with optional ether padding (non-wrapping)
+        if self.boundary == 'ether':
+            ether = self.ether_pattern
+            left_pad = [ether[(i % len(ether))] for i in range(pad, 0, -1)]
+            right_pad = [ether[(i % len(ether))] for i in range(pad)]
+        else:
+            left_pad = [0] * pad
+            right_pad = [0] * pad
+        
+        working = left_pad + self.state + right_pad
+        wn = len(working)
+        
+        for i in range(wn):
+            left = working[i - 1] if i > 0 else 0
+            center = working[i]
+            right = working[i + 1] if i < wn - 1 else 0
             next_cell = self._rule110(left, center, right)
             next_state.append(next_cell)
         
@@ -76,6 +100,56 @@ class Rule110:
     def get_history(self):
         """Get entire evolution history"""
         return self.history
+
+
+class DynamicRule110(Rule110):
+    """
+    Rule 110 with dynamic growth and ether boundaries to reduce edge artifacts.
+    """
+
+    def __init__(self, initial_state, boundary: str = "ether", grow_margin: int = 8, grow_chunk: int = None):
+        super().__init__(initial_state, boundary=boundary)
+        self.boundary = boundary
+        self.grow_margin = max(grow_margin, 1)
+        self.grow_chunk = grow_chunk or len(ETHER_BASE) * 2
+
+    def _boundary_value(self, idx: int) -> int:
+        if self.boundary == "ether":
+            return ETHER_BASE[idx % len(ETHER_BASE)]
+        return 0
+
+    def _maybe_grow(self):
+        # Prepend/append ether chunks if activity approaches edges
+        chunk_bits = self._ether_chunk(self.grow_chunk)
+        grew = False
+        if any(self.state[: self.grow_margin]):
+            self.state = chunk_bits + self.state
+            grew = True
+        if any(self.state[-self.grow_margin :]):
+            self.state = self.state + chunk_bits
+            grew = True
+        if grew:
+            # Extend last history entry to keep lengths aligned
+            self.history[-1] = self.state.copy()
+
+    def _ether_chunk(self, width: int) -> List[int]:
+        if width <= 0:
+            return []
+        base = ETHER_BASE * ((width // len(ETHER_BASE)) + 1)
+        return base[:width]
+
+    def step(self):
+        """Execute one step with dynamic growth."""
+        self._maybe_grow()
+        next_state = []
+        n = len(self.state)
+        for i in range(n):
+            left = self.state[i - 1] if i > 0 else self._boundary_value(-1)
+            center = self.state[i]
+            right = self.state[i + 1] if i < n - 1 else self._boundary_value(n)
+            next_state.append(self._rule110(left, center, right))
+        self.state = next_state
+        self.history.append(list(self.state))
 
 
 class Rule110Compiler:
