@@ -15,9 +15,9 @@ Our implementation uses ad-hoc boolean/arithmetic gate encodings with small, bou
 
 #### Cook CTS notes (concise)
 - Ether: canonical 14-cell period `00010011011110` (phase modulus 14).
-- Packages: A/B/C/D + DELIM placeholders tracked in `cook_gliders.py` (swap with measured Cook patterns when available).
+- Packages: A/B/C/D + DELIM placeholders tracked in `cook_gliders.py`; swap with measured Cook patterns when available.
 - Delimiters/rule markers: DELIM package separates queue from rules.
-- Spacing/phase: scheduler enforces min gap ≥ max package len (see `cts_scheduler.py`); phase alignment mod 14.
+- Spacing/phase: scheduler enforces min gap accounting for package lengths; phase alignment mod 14.
 - Output: read from CTS queue evolution (not fixed offsets).
 
 #### Minimal CTS example candidates
@@ -48,6 +48,11 @@ Our implementation uses ad-hoc boolean/arithmetic gate encodings with small, bou
 **Status:** Completed  
 **Problem:** We read fixed offsets after fixed steps. Cook reads results from CTS/glider evolution.  
 **Action:** Implement CTS output extraction that reads results from the evolving glider system rather than fixed positions.
+
+### CTS fixtures (current)
+- `default_unary_duplicator`: queue `1`, rule `1 -> 11`.
+- `cts_example_small`: queue `X`, rules `X -> XY`, `Y -> X`.
+- Regression signatures in `test_cook_cts.py` cover active-count traces for both.
 
 ### COOK-7: Align encodings with proven packages; add validation
 **Status:** Completed  

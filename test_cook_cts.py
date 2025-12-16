@@ -80,3 +80,18 @@ def test_cts_example_small_encodes_and_runs():
     counts = active_counts(result.history)
     assert len(counts) == 13
     assert all(c >= 0 for c in counts)
+
+
+def test_default_cts_active_counts_signature():
+    result = run_cts(steps=20)
+    counts = active_counts(result.history)
+    expected = [209, 245, 235, 245, 242, 268, 256, 256, 258, 331, 298, 235, 269, 278, 299, 341, 220, 219, 234, 297, 269]
+    assert counts == expected
+
+
+def test_small_cts_active_counts_signature():
+    spec = cts_example_small()
+    result = run_cts(spec, steps=15)
+    counts = active_counts(result.history)
+    expected = [213, 250, 234, 248, 242, 261, 256, 257, 259, 329, 298, 235, 269, 279, 298, 335]
+    assert counts == expected

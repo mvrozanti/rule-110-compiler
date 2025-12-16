@@ -18,7 +18,7 @@ class TestCookScheduler(unittest.TestCase):
     def test_spacing_respected(self):
         placements = [
             PackagePlacement("A", 10),
-            PackagePlacement("B", 10 + MIN_SPACING + 1),
+            PackagePlacement("B", 28),  # ensures gap >= MIN_SPACING given package lengths
         ]
         result = schedule_packages(placements, min_gap=MIN_SPACING, phase_mod=PHASE_MOD, strict=True)
         self.assertTrue(result.valid)
@@ -76,6 +76,13 @@ class TestCookExecutor(unittest.TestCase):
         right_val = ca._boundary_value(len(ca.get_state()))
         self.assertIn(left_val, (0, 1))
         self.assertIn(right_val, (0, 1))
+
+    def test_dynamic_growth_preserves_ether_prefix(self):
+        chunk = len(ETHER_BASE)
+        ca = DynamicRule110([1], boundary="ether", grow_margin=1, grow_chunk=chunk)
+        ca._maybe_grow()  # force growth without evolution
+        prefix = ca.get_state()[:chunk]
+        self.assertEqual(prefix, ETHER_BASE[:chunk])
 
 
 if __name__ == "__main__":

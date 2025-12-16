@@ -1,8 +1,9 @@
 """Helpers for Cook-style ether and glider packages.
 
 Patterns below follow the canonical 14-cell ether described by Cook (2004).
-Glider packages are pragmatic placeholders (A/B/C/D + delimiter) structured to
-allow spacing/phase validation; replace with measured patterns when available.
+Glider packages are still placeholders: we approximate A/B/C/D + DELIM to
+maintain structure and spacing/phase checks. Swap these with measured Cook
+packages when available; phase modulus remains 14.
 """
 from dataclasses import dataclass
 from typing import List, Dict, Tuple
@@ -12,15 +13,16 @@ from typing import List, Dict, Tuple
 ETHER_BASE: List[int] = [0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0]
 PHASE_MOD = len(ETHER_BASE)
 
-# Package snippets (structured placeholders). Swap with empirically measured
-# packages to reach full fidelity; lengths are kept short for scheduling tests.
+# Package snippets (structured placeholders). Replace with measured Cook
+# patterns when available; lengths preserved for scheduler constraints.
 GLIDER_PACKAGES: Dict[str, List[int]] = {
-    "A": [1, 1, 0, 1, 1, 0, 0, 1, 0],
-    "B": [1, 0, 1, 1, 0, 0, 1, 1],
+    "A": [1, 0, 1, 1, 0, 0, 1, 1, 0],
+    "B": [1, 1, 0, 1, 1, 0, 0, 1],
     "C": [1, 1, 1, 0, 0, 1, 0, 1],
     "D": [1, 0, 0, 1, 1, 0, 1, 0, 0],
-    "DELIM": [1, 1, 1, 0, 1, 0, 0, 1],  # delimiter / marker
+    "DELIM": [1, 1, 1, 0, 1, 0, 0, 1],
 }
+
 
 @dataclass
 class PackagePlacement:
@@ -70,8 +72,7 @@ def build_initial_state(packages: List[Tuple[str, int, int]], ether_periods: int
     Construct an initial tape from (name, offset, phase) packages on ether.
     """
     length = ether_periods * len(ETHER_BASE)
-    base = make_ether(length, phase=ether_phase)
-    placements = [PackagePlacement(name, offset, phase) for name, offset, phase in packages]
+    placements = [PackagePlacement(name, offset, phase % PHASE_MOD) for name, offset, phase in packages]
     tape, _ = build_base_tape(length, placements)
     return tape
 
