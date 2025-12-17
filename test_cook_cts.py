@@ -100,3 +100,20 @@ def test_small_cts_active_counts_signature():
     counts = active_counts(result.history)
     expected = [212, 239, 248, 249, 240, 270, 254, 245, 250, 321, 289, 238, 259, 267, 291, 331]
     assert counts == expected
+
+
+def test_default_cts_fingerprint_window():
+    result = run_cts(steps=12)
+    state = result.history[10]
+    window = state[50:80]
+    fingerprint = "".join(str(b) for b in window)
+    assert fingerprint == "110011111000101100110101101111"
+
+
+def test_small_cts_fingerprint_window():
+    spec = cts_example_small()
+    result = run_cts(spec, steps=12)
+    state = result.history[10]
+    window = state[50:80]
+    fingerprint = "".join(str(b) for b in window)
+    assert fingerprint == "110011111000101100110101101011"
