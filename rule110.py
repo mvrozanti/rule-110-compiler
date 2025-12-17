@@ -144,9 +144,9 @@ class DynamicRule110(Rule110):
         next_state = []
         n = len(self.state)
         for i in range(n):
-            left = self.state[i - 1] if i > 0 else self._boundary_value(-1)
+            left = self.state[i - 1] if i > 0 else self._boundary_value(len(self.state) - 1)
             center = self.state[i]
-            right = self.state[i + 1] if i < n - 1 else self._boundary_value(n)
+            right = self.state[i + 1] if i < n - 1 else self._boundary_value(0)
             next_state.append(self._rule110(left, center, right))
         self.state = next_state
         self.history.append(list(self.state))

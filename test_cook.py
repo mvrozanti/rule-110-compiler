@@ -84,6 +84,29 @@ class TestCookExecutor(unittest.TestCase):
         prefix = ca.get_state()[:chunk]
         self.assertEqual(prefix, ETHER_BASE[:chunk])
 
+    def test_dynamic_growth_preserves_ether_suffix(self):
+        chunk = len(ETHER_BASE)
+        ca = DynamicRule110([1], boundary="ether", grow_margin=1, grow_chunk=chunk)
+        ca._maybe_grow()
+        suffix = ca.get_state()[-chunk:]
+        self.assertEqual(suffix, ETHER_BASE[:chunk])
+
+    def test_dynamic_growth_preserves_ether_after_steps(self):
+        chunk = len(ETHER_BASE)
+        ca = DynamicRule110([1], boundary="ether", grow_margin=1, grow_chunk=chunk)
+        ca._maybe_grow()
+        # Prefix/suffix after explicit growth should equal ether chunk
+        self.assertEqual(ca.get_state()[:chunk], ETHER_BASE[:chunk])
+        self.assertEqual(ca.get_state()[-chunk:], ETHER_BASE[:chunk])
+        # After a step, boundary_value should still report ether pattern
+        ca.step()
+        left_boundary = [ca._boundary_value(-1 - i) for i in range(chunk)]
+        right_boundary = [ca._boundary_value(len(ca.get_state()) + i) for i in range(chunk)]
+        left_expected = [ETHER_BASE[(PHASE_MOD - 1 - i) % PHASE_MOD] for i in range(chunk)]
+        right_expected = [ETHER_BASE[(len(ca.get_state()) + i) % PHASE_MOD] for i in range(chunk)]
+        self.assertEqual(left_boundary, left_expected)
+        self.assertEqual(right_boundary, right_expected)
+
 
 if __name__ == "__main__":
     unittest.main()
