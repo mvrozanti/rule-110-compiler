@@ -4,6 +4,7 @@ from cook_cts_encoder import default_unary_duplicator, encode_cts, cts_example_s
 from cts_scheduler import schedule_packages, MIN_SPACING
 from cook_gliders import PackagePlacement, GLIDER_PACKAGES
 from cts_executor import run_cts, extract_queue_slice, active_counts, queue_window
+from cts_decode import run_cts_symbolic
 
 
 def test_encode_cts_not_empty():
@@ -117,3 +118,18 @@ def test_small_cts_fingerprint_window():
     window = state[50:80]
     fingerprint = "".join(str(b) for b in window)
     assert fingerprint == "110011111000101100110101101011"
+
+
+def test_symbolic_cts_matches_expected_queue():
+    spec = cts_example_small()
+    symbolic = run_cts_symbolic(spec, steps=5)
+    # For rules X->XY, Y->X (pop head, append production):
+    expected = [
+        ["X"],
+        ["X", "Y"],
+        ["Y", "X", "Y"],
+        ["X", "Y", "X"],
+        ["Y", "X", "X", "Y"],
+        ["X", "X", "Y", "X"],
+    ]
+    assert symbolic == expected
