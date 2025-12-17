@@ -41,6 +41,9 @@ class CTSEncoding:
     initial_state: List[int]
     placements: List[PackagePlacement]
     schedule_warnings: List[str]
+    symbol_map: Dict[str, str]
+    spacing: int
+    ether_length: int
 
 
 def default_unary_duplicator() -> CTSSpec:
@@ -99,7 +102,14 @@ def encode_cts(spec: CTSSpec) -> CTSEncoding:
     if not sched.valid:
         raise ValueError(f"Invalid CTS schedule: {sched.warnings}")
     tape, applied = build_base_tape(spec.ether_length, sched.placements)
-    return CTSEncoding(initial_state=tape, placements=applied, schedule_warnings=sched.warnings)
+    return CTSEncoding(
+        initial_state=tape,
+        placements=applied,
+        schedule_warnings=sched.warnings,
+        symbol_map=spec.symbol_map,
+        spacing=spec.spacing,
+        ether_length=spec.ether_length,
+    )
 
 
 def _validate_spec(spec: CTSSpec) -> None:
@@ -122,3 +132,7 @@ def _validate_spec(spec: CTSSpec) -> None:
         for prod_sym in rule.production:
             if prod_sym not in spec.symbol_map:
                 raise ValueError(f"No package mapping for production symbol '{prod_sym}'")
+
+    # Ensure spacing is feasible with package lengths
+    if spec.spacing - max_package_len() < 0:
+        raise ValueError(f"spacing {spec.spacing} too small for package length {max_package_len()}")

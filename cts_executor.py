@@ -12,6 +12,9 @@ class CTSRunResult:
     warnings: List[str]
     initial_state: List[int]
     spec: CTSSpec
+    symbol_map: Dict[str, str]
+    spacing: int
+    ether_length: int
 
 
 def run_cts(spec: Optional[CTSSpec] = None, steps: int = 400, boundary: str = "ether") -> CTSRunResult:
@@ -24,6 +27,9 @@ def run_cts(spec: Optional[CTSSpec] = None, steps: int = 400, boundary: str = "e
         warnings=encoding.schedule_warnings,
         initial_state=encoding.initial_state,
         spec=spec,
+        symbol_map=encoding.symbol_map,
+        spacing=encoding.spacing,
+        ether_length=encoding.ether_length,
     )
 
 

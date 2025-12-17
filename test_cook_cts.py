@@ -80,6 +80,10 @@ def test_cts_example_small_encodes_and_runs():
     counts = active_counts(result.history)
     assert len(counts) == 13
     assert all(c >= 0 for c in counts)
+    # metadata is preserved
+    assert result.spacing == spec.spacing
+    assert result.ether_length == spec.ether_length
+    assert result.symbol_map == spec.symbol_map
 
 
 def test_default_cts_active_counts_signature():
