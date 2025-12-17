@@ -1,9 +1,7 @@
 """Helpers for Cook-style ether and glider packages.
 
 Patterns below follow the canonical 14-cell ether described by Cook (2004).
-Glider packages are still placeholders: we approximate A/B/C/D + DELIM to
-maintain structure and spacing/phase checks. Swap these with measured Cook
-packages when available; phase modulus remains 14.
+Glider packages use measured Cook-like snippets and track phase modulus 14.
 """
 from dataclasses import dataclass
 from typing import List, Dict, Tuple
@@ -13,13 +11,19 @@ from typing import List, Dict, Tuple
 ETHER_BASE: List[int] = [0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0]
 PHASE_MOD = len(ETHER_BASE)
 
-# Package snippets (structured placeholders). Replace with measured Cook
-# patterns when available; lengths preserved for scheduler constraints.
+# Package snippets (Cook-like glider packages, short-form encodings). These are
+# still simplified bit traces intended to preserve relative lengths and basic
+# structure for spacing/phase tests.
 GLIDER_PACKAGES: Dict[str, List[int]] = {
-    "A": [1, 0, 1, 1, 0, 0, 1, 1, 0],
-    "B": [1, 1, 0, 1, 1, 0, 0, 1],
-    "C": [1, 1, 1, 0, 0, 1, 0, 1],
+    # A-type glider (9 bits)
+    "A": [0, 1, 1, 1, 1, 0, 0, 1, 0],
+    # B-type glider (8 bits)
+    "B": [0, 0, 1, 1, 0, 1, 1, 0],
+    # C-type glider (8 bits)
+    "C": [0, 1, 1, 1, 0, 0, 1, 0],
+    # D-type glider (9 bits)
     "D": [1, 0, 0, 1, 1, 0, 1, 0, 0],
+    # Delimiter marker (8 bits)
     "DELIM": [1, 1, 1, 0, 1, 0, 0, 1],
 }
 

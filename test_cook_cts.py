@@ -85,7 +85,8 @@ def test_cts_example_small_encodes_and_runs():
 def test_default_cts_active_counts_signature():
     result = run_cts(steps=20)
     counts = active_counts(result.history)
-    expected = [209, 245, 235, 245, 242, 268, 256, 256, 258, 331, 298, 235, 269, 278, 299, 341, 220, 219, 234, 297, 269]
+    # Signature updated after adopting Cook-like glider packages
+    expected = [209, 236, 247, 245, 242, 274, 253, 248, 249, 331, 292, 237, 262, 268, 295, 342, 211, 222, 229, 297, 271]
     assert counts == expected
 
 
@@ -93,5 +94,5 @@ def test_small_cts_active_counts_signature():
     spec = cts_example_small()
     result = run_cts(spec, steps=15)
     counts = active_counts(result.history)
-    expected = [213, 250, 234, 248, 242, 261, 256, 257, 259, 329, 298, 235, 269, 279, 298, 335]
+    expected = [212, 239, 248, 249, 240, 270, 254, 245, 250, 321, 289, 238, 259, 267, 291, 331]
     assert counts == expected
