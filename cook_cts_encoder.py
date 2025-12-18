@@ -63,7 +63,7 @@ def cts_example_small() -> CTSSpec:
         CTSRule(symbol="X", production=["X", "Y"]),
         CTSRule(symbol="Y", production=["X"]),
     ]
-    return CTSSpec(queue=["X"], rules=rules)
+    return CTSSpec(queue=["X"], rules=rules, symbol_map={"X": "A", "Y": "B"})
 
 
 def _queue_packages(spec: CTSSpec) -> List[PackagePlacement]:

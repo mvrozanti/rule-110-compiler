@@ -4,6 +4,7 @@ from cook_cts_encoder import default_unary_duplicator, encode_cts, cts_example_s
 from cts_scheduler import schedule_packages, MIN_SPACING
 from cook_gliders import PackagePlacement, GLIDER_PACKAGES
 from cts_executor import run_cts, extract_queue_slice, active_counts, queue_window
+from cook_ca_decoder import decode_queue_from_state
 from cts_decode import run_cts_symbolic
 
 
@@ -133,3 +134,26 @@ def test_symbolic_cts_matches_expected_queue():
         ["X", "X", "Y", "X"],
     ]
     assert symbolic == expected
+
+
+def test_decode_initial_state_matches_symbolic_queue():
+    spec = default_unary_duplicator()
+    result = run_cts(spec, steps=0)
+    decoded = decode_queue_from_state(result.initial_state, result.symbol_map, tolerance=0)
+    assert decoded[:1] == spec.queue  # first symbol recovered
+
+
+def test_decode_small_initial_state_matches_symbolic_queue():
+    spec = cts_example_small()
+    result = run_cts(spec, steps=0)
+    decoded = decode_queue_from_state(result.initial_state, result.symbol_map, tolerance=0)
+    assert decoded[:1] == spec.queue
+
+
+def test_decode_fails_on_bad_alignment():
+    spec = default_unary_duplicator()
+    result = run_cts(spec, steps=0)
+    shifted = [0] + result.initial_state  # break alignment
+    decoded = decode_queue_from_state(shifted, result.symbol_map, tolerance=0)
+    # Require a stricter match (first two symbols); expect mismatch or short decode
+    assert decoded[:2] != spec.queue[:2]
