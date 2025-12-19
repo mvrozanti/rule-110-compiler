@@ -8,7 +8,7 @@ Note: This decoder matches static package shapes; with full Cook glider motion
 you would need phase-aware tracking. This is sufficient to validate initial
 encodings and simple regression windows.
 """
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 from cook_gliders import GLIDER_PACKAGES
 
@@ -52,3 +52,19 @@ def decode_queue_from_state(state: List[int], symbol_map: Dict[str, str], tolera
         if sym:
             decoded.append(sym)
     return decoded
+
+
+def decode_history(
+    history: List[List[int]],
+    symbol_map: Dict[str, str],
+    window: Optional[Tuple[int, int]] = None,
+    tolerance: int = 0,
+) -> List[List[str]]:
+    """
+    Decode all steps in a history to symbol queues using a windowed region.
+    """
+    decoded_steps: List[List[str]] = []
+    for state in history:
+        region = state[slice(*window)] if window else state
+        decoded_steps.append(decode_queue_from_state(region, symbol_map, tolerance=tolerance))
+    return decoded_steps

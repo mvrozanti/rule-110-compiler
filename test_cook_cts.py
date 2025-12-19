@@ -3,9 +3,11 @@ import pytest
 from cook_cts_encoder import default_unary_duplicator, encode_cts, cts_example_small
 from cts_scheduler import schedule_packages, MIN_SPACING
 from cook_gliders import PackagePlacement, GLIDER_PACKAGES
+from cook_gliders_moving import MOVING_PACKAGES, PHASE_MOD
 from cts_executor import run_cts, extract_queue_slice, active_counts, queue_window
-from cook_ca_decoder import decode_queue_from_state
+from cook_ca_decoder import decode_queue_from_state, decode_history
 from cts_decode import run_cts_symbolic
+from bf_to_cts import compile_brainfuck
 
 
 def test_encode_cts_not_empty():
@@ -157,3 +159,28 @@ def test_decode_fails_on_bad_alignment():
     decoded = decode_queue_from_state(shifted, result.symbol_map, tolerance=0)
     # Require a stricter match (first two symbols); expect mismatch or short decode
     assert decoded[:2] != spec.queue[:2]
+
+
+def test_moving_packages_stub_present():
+    # Ensure moving packages are registered for all static packages
+    for name in GLIDER_PACKAGES:
+        assert name in MOVING_PACKAGES
+        pkg = MOVING_PACKAGES[name]
+        assert pkg.phase % PHASE_MOD == pkg.phase
+
+
+def test_bf_compile_and_encode_runs():
+    spec = compile_brainfuck("++>+")
+    encoding = encode_cts(spec)
+    assert encoding.initial_state
+    result = run_cts(spec, steps=5)
+    decoded = decode_queue_from_state(result.initial_state, result.symbol_map, tolerance=0)
+    assert decoded[: len(spec.queue)] == spec.queue
+
+
+def test_decode_history_matches_symbolic_initial_step():
+    spec = cts_example_small()
+    result = run_cts(spec, steps=2)
+    symbolic = run_cts_symbolic(spec, steps=2)
+    decoded = decode_history(result.history[:1], result.symbol_map, window=None, tolerance=0)
+    assert decoded[0][:1] == symbolic[0][:1]
