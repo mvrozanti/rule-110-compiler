@@ -62,6 +62,7 @@ def decode_history(
 ) -> List[List[str]]:
     """
     Decode all steps in a history to symbol queues using a windowed region.
+    Matches are re-evaluated independently per step.
     """
     decoded_steps: List[List[str]] = []
     for state in history:

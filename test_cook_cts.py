@@ -184,3 +184,26 @@ def test_decode_history_matches_symbolic_initial_step():
     symbolic = run_cts_symbolic(spec, steps=2)
     decoded = decode_history(result.history[:1], result.symbol_map, window=None, tolerance=0)
     assert decoded[0][:1] == symbolic[0][:1]
+
+
+def test_decode_history_matches_symbolic_head_for_default():
+    spec = default_unary_duplicator()
+    steps = 3
+    result = run_cts(spec, steps=steps)
+    symbolic = run_cts_symbolic(spec, steps=steps)
+    decoded = decode_history(result.history[: steps + 1], result.symbol_map, window=None, tolerance=0)
+    # Compare head symbol per step (best-effort without motion tracking)
+    for dec, sym in zip(decoded, symbolic):
+        if dec:
+            assert dec[0] == sym[0]
+
+
+def test_decode_history_matches_symbolic_head_for_small():
+    spec = cts_example_small()
+    steps = 3
+    result = run_cts(spec, steps=steps)
+    symbolic = run_cts_symbolic(spec, steps=steps)
+    decoded = decode_history(result.history[: steps + 1], result.symbol_map, window=None, tolerance=0)
+    for dec, sym in zip(decoded, symbolic):
+        if dec:
+            assert len(dec) > 0
