@@ -108,7 +108,7 @@ class DynamicRule110(Rule110):
     """
 
     def __init__(self, initial_state, boundary: str = "ether", grow_margin: int = 8, grow_chunk: int = None):
-        super().__init__(initial_state, boundary=boundary)
+        super().__init__(initial_state)
         self.boundary = boundary
         self.grow_margin = max(grow_margin, 1)
         self.grow_chunk = grow_chunk or len(ETHER_BASE) * 2
@@ -144,9 +144,9 @@ class DynamicRule110(Rule110):
         next_state = []
         n = len(self.state)
         for i in range(n):
-            left = self.state[i - 1] if i > 0 else self._boundary_value(len(self.state) - 1)
+            left = self.state[i - 1] if i > 0 else self._boundary_value(-1)
             center = self.state[i]
-            right = self.state[i + 1] if i < n - 1 else self._boundary_value(0)
+            right = self.state[i + 1] if i < n - 1 else self._boundary_value(n)
             next_state.append(self._rule110(left, center, right))
         self.state = next_state
         self.history.append(list(self.state))
