@@ -359,21 +359,23 @@
 
         <div class="program-display">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <div><strong>Brainfuck Program:</strong></div>
-                <div style="display: flex; gap: 10px;">
-                    <select id="exampleSelect" style="background: rgba(0,0,0,0.3); border: 1px solid #667eea; color: #e0e0e0; padding: 5px 10px; border-radius: 4px;">
-                        <option value="++>+" selected>Add & Move (++>+)</option>
-                        <option value="++[>++++++<-]>">Multiply (18x)</option>
-                        <option value="[+++]">Infinite Loop</option>
-                        <option value="++>++[<+>-]<">Add Two Numbers</option>
-                        <option value="+[,.]">Echo Input</option>
-                    </select>
-                    <button id="compileBtn" style="background: linear-gradient(135deg, #667eea, #764ba2); border: none; color: white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">🔄 Recompile</button>
-                </div>
+                <div><strong>Brainfuck Examples:</strong></div>
+                <select id="exampleSelect" style="background: rgba(0,0,0,0.3); border: 1px solid #667eea; color: #e0e0e0; padding: 8px 12px; border-radius: 6px; font-size: 0.9rem;">
+                    <option value="++>+" selected>Add & Move (++>+)</option>
+                    <option value="++[>++++++<-]>">Multiply (18x)</option>
+                    <option value="[+++]">Infinite Loop</option>
+                    <option value="++>++[<+>-]<">Add Two Numbers</option>
+                    <option value="+[,.]">Echo Input</option>
+                </select>
             </div>
-            <textarea id="programInput" rows="3" style="width: 100%; background: rgba(0,0,0,0.3); border: 1px solid #667eea; color: #e0e0e0; padding: 10px; border-radius: 6px; font-family: 'Fira Code', monospace; font-size: 1.1rem; resize: vertical;">++>+</textarea>
-            <div style="margin-top: 10px; font-size: 0.9rem; color: #b0b0b0;">
-                💡 Edit the Brainfuck program above and click "Recompile" to see it transformed into Rule 110 evolution!
+            <div class="program-code" id="programDisplay">++>+</div>
+            <div style="margin-top: 15px; padding: 15px; background: rgba(102, 126, 234, 0.1); border-left: 4px solid #667eea; border-radius: 4px;">
+                <div style="font-size: 0.9rem; color: #b0b0b0; margin-bottom: 8px;">
+                    💡 <strong>Select examples above</strong> to explore different Brainfuck programs and see how they transform through the universality pipeline.
+                </div>
+                <div style="font-size: 0.8rem; color: #888;">
+                    <em>Note: This demonstration shows pre-compiled examples. Full custom program compilation requires server-side processing.</em>
+                </div>
             </div>
         </div>
 
@@ -409,7 +411,7 @@
                     <div class="pipeline-step">
                         <div>⚛️</div>
                         <div><strong>Rule 110</strong></div>
-                        <div>149 active cells</div>
+                        <div>148 active cells</div>
                     </div>
                 </div>
             </div>
@@ -442,7 +444,7 @@
 Turing Machine States: q0, q1, q2, q3, q4<br>
 Initial State: q0<br>
 Accept State: q4<br><br>
-CTS Initial Tape: NNYNNYYY<br>
+CTS Initial Tape: NYYNNYNN<br>
 CTS Appendants: 8 rules
                 </div>
             </div>
@@ -499,7 +501,7 @@ CTS Appendants: 8 rules
                         <div class="metric-label">Evolution Steps</div>
                     </div>
                     <div class="metric">
-                        <span class="metric-value">1555</span>
+                        <span class="metric-value">1559</span>
                         <div class="metric-label">Final Active Cells</div>
                     </div>
                     <div class="metric">
@@ -639,14 +641,14 @@ CTS Appendants: 8 rules
                         <div class="lattice-cell active"></div>
                         <div class="lattice-cell active"></div>
                         <div class="lattice-cell active"></div>
-                        <div class="lattice-cell active"></div>
                         <div class="lattice-cell"></div>
                         <div class="lattice-cell"></div>
                         <div class="lattice-cell"></div>
                         <div class="lattice-cell active"></div>
-                        <div class="lattice-cell active"></div>
-                        <div class="lattice-cell active"></div>
                         <div class="lattice-cell"></div>
+                        <div class="lattice-cell"></div>
+                        <div class="lattice-cell active"></div>
+                        <div class="lattice-cell active"></div>
                         <div class="lattice-cell"></div>
                         <div class="lattice-cell"></div>
                         <div class="lattice-cell"></div>
@@ -915,14 +917,14 @@ CTS Appendants: 8 rules
                         <div class="lattice-cell active"></div>
                         <div class="lattice-cell active"></div>
                         <div class="lattice-cell active"></div>
-                        <div class="lattice-cell active"></div>
                         <div class="lattice-cell"></div>
                         <div class="lattice-cell"></div>
                         <div class="lattice-cell"></div>
                         <div class="lattice-cell active"></div>
-                        <div class="lattice-cell active"></div>
-                        <div class="lattice-cell active"></div>
                         <div class="lattice-cell"></div>
+                        <div class="lattice-cell"></div>
+                        <div class="lattice-cell active"></div>
+                        <div class="lattice-cell active"></div>
                         <div class="lattice-row">
                         <div class="step-indicator">Step 2</div>
                         <div class="lattice-cell active"></div>
@@ -5972,7 +5974,7 @@ Rule 110 Evolution: {execution_result['final_active_cells']} active cells after 
             }},
             '[+++]': {{
                 program: '[+++]',
-                description: 'Infinite loop (division by zero)',
+                description: 'Infinite loop demonstration',
                 tm_states: 6,
                 cts_appendants: 10,
                 rule110_cells: 178,
@@ -5988,7 +5990,7 @@ Rule 110 Evolution: {execution_result['final_active_cells']} active cells after 
             }},
             '+[,.]': {{
                 program: '+[,.]',
-                description: 'Echo input until null',
+                description: 'Echo input until null byte',
                 tm_states: 9,
                 cts_appendants: 15,
                 rule110_cells: 234,
@@ -6014,67 +6016,32 @@ Rule 110 Evolution: {execution_result['final_active_cells']} active cells after 
             }}
         }}
 
-        function updateProgram() {{
+        function updateExample() {{
             const select = document.getElementById('exampleSelect');
-            const textarea = document.getElementById('programInput');
+            const display = document.getElementById('programDisplay');
             const selectedProgram = select.value;
 
             if (examples[selectedProgram]) {{
-                textarea.value = examples[selectedProgram].program;
-                updateMetrics(selectedProgram);
-            }}
-        }}
+                const example = examples[selectedProgram];
+                display.textContent = example.program;
 
-        function updateMetrics(program) {{
-            if (!examples[program]) return;
-
-            const example = examples[program];
-
-            // Update metrics display
-            const metrics = document.querySelectorAll('.metric-value');
-            if (metrics.length >= 4) {{
-                metrics[0].textContent = example.tm_states;
-                metrics[1].textContent = example.tm_states * 2; // Rough estimate
-                metrics[2].textContent = example.cts_appendants;
-                metrics[3].textContent = example.rule110_cells;
-            }}
-
-            // Update description
-            const descElement = document.querySelector('.program-display div:last-child');
-            if (descElement) {{
-                descElement.innerHTML = `💡 <strong>${example.description}</strong><br>Expected output: <code style="background: rgba(0,255,136,0.1); color: #00ff88; padding: 2px 6px; border-radius: 3px;">${example.expected_output}</code>`;
-            }}
-        }}
-
-        function compileProgram() {{
-            const textarea = document.getElementById('programInput');
-            const program = textarea.value.trim();
-
-            if (!program) {{
-                alert('Please enter a Brainfuck program!');
-                return;
-            }}
-
-            // Show loading state
-            const compileBtn = document.getElementById('compileBtn');
-            const originalText = compileBtn.textContent;
-            compileBtn.textContent = '⏳ Compiling...';
-            compileBtn.disabled = true;
-
-            // Simulate compilation (in a real implementation, this would call a server)
-            setTimeout(() => {{
-                compileBtn.textContent = originalText;
-                compileBtn.disabled = false;
-
-                if (examples[program]) {{
-                    // Pre-compiled example
-                    updateMetrics(program);
-                    showNotification('✅ Program recompiled successfully!', 'success');
-                }} else {{
-                    // Custom program
-                    showNotification('ℹ️ Custom programs require server-side compilation. This demo shows pre-compiled examples.', 'info');
+                // Update metrics
+                const metrics = document.querySelectorAll('.metric-value');
+                if (metrics.length >= 4) {{
+                    metrics[0].textContent = example.tm_states;
+                    metrics[1].textContent = example.tm_states * 2; // Rough transitions estimate
+                    metrics[2].textContent = example.cts_appendants;
+                    metrics[3].textContent = example.rule110_cells;
                 }}
-            }}, 1500);
+
+                // Update description
+                const descElement = document.querySelector('.program-display div:last-child');
+                if (descElement) {{
+                    descElement.innerHTML = `💡 <strong>${example.description}</strong><br>Expected output: <code style="background: rgba(0,255,136,0.1); color: #00ff88; padding: 2px 6px; border-radius: 3px;">${example.expected_output}</code>`;
+                }}
+
+                showNotification('✅ Example loaded successfully!', 'success');
+            }}
         }}
 
         function showNotification(message, type) {{
@@ -6113,41 +6080,22 @@ Rule 110 Evolution: {execution_result['final_active_cells']} active cells after 
 
             document.body.appendChild(notification);
 
-            // Auto-remove after 4 seconds
+            // Auto-remove after 3 seconds
             setTimeout(() => {{
                 notification.style.animation = 'slideIn 0.3s ease-out reverse';
                 setTimeout(() => notification.remove(), 300);
-            }}, 4000);
+            }}, 3000);
         }}
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {{
             showTab('compiler');
 
-            // Set up event listeners
-            document.getElementById('exampleSelect').addEventListener('change', updateProgram);
-            document.getElementById('compileBtn').addEventListener('click', compileProgram);
-            document.getElementById('programInput').addEventListener('input', function() {{
-                const select = document.getElementById('exampleSelect');
-                const customProgram = this.value.trim();
-
-                // Check if it matches a pre-compiled example
-                let matched = false;
-                for (let option of select.options) {{
-                    if (option.value === customProgram) {{
-                        select.value = customProgram;
-                        matched = true;
-                        break;
-                    }}
-                }}
-
-                if (!matched) {{
-                    select.value = select.options[0].value; // Reset to first option
-                }}
-            }});
+            // Set up event listener
+            document.getElementById('exampleSelect').addEventListener('change', updateExample);
 
             // Initialize with first example
-            updateProgram();
+            updateExample();
         }});
     </script>
 </body>
