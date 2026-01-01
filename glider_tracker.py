@@ -9,6 +9,14 @@ from dataclasses import dataclass
 from typing import List, Dict, Tuple, Optional, Any
 import math
 
+# Import Cook's exact glider patterns
+try:
+    from cook_gliders_exact import COOK_GLIDER_PATTERNS, ETHER_PATTERN
+except ImportError:
+    # Fallback if exact patterns not available
+    COOK_GLIDER_PATTERNS = {}
+    ETHER_PATTERN = [0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0]
+
 
 # Glider properties from Cook's paper (Figure 5 and surrounding text)
 # These define gliders by their periods, widths, and behavioral properties
@@ -17,61 +25,35 @@ GLIDER_PROPERTIES: Dict[str, Dict[str, Any]] = {
     "A": {
         "period": (6, 2),      # (time, displacement) in A units
         "width": 6,            # mod 14
-        "velocity": 1.0/3.0,   # cells per step (simplified)
+        "velocity": 2/3,       # cells per step (exact from Cook)
         "direction": "right"
     },
     # B gliders: left-moving, period (4, 2) relative to B units
     "B": {
         "period": (4, 2),      # (time, displacement) in B units
         "width": 2,            # mod 14
-        "velocity": -1.0/2.0,  # cells per step (simplified)
+        "velocity": -1/2,      # cells per step (exact from Cook)
         "direction": "left"
     },
     # C gliders: stationary, used for tape data in Cook's construction
     "C1": {
-        "period": (9, 0),      # stationary
+        "period": (12, 0),     # stationary, period 12
         "width": 1,
         "velocity": 0.0,
         "direction": "stationary"
     },
     "C2": {
-        "period": (9, 0),      # stationary
+        "period": (9, 0),      # stationary, period 9
         "width": 1,
         "velocity": 0.0,
         "direction": "stationary"
-    },
-    "C3": {
-        "period": (9, 0),      # stationary
-        "width": 1,
-        "velocity": 0.0,
-        "direction": "stationary"
-    },
-    # D gliders: right-moving like A but different behavior
-    "D1": {
-        "period": (7, 0),      # (time, displacement)
-        "width": 3,
-        "velocity": 1.0/7.0,   # slower than A
-        "direction": "right"
-    },
-    "D2": {
-        "period": (7, 0),
-        "width": 3,
-        "velocity": 1.0/7.0,
-        "direction": "right"
     },
     # Ē gliders: used for moving data in Cook's construction
     "Ē": {
         "period": (36, 4),     # (time, displacement) in A units
         "width": 8,
-        "velocity": 1.0/9.0,   # cells per step
-        "direction": "right"
-    },
-    # DELIM: delimiter gliders
-    "DELIM": {
-        "period": (1, 1),
-        "width": 0,
-        "velocity": 1.0,
-        "direction": "right"
+        "velocity": -4/15,     # cells per step (exact from Cook)
+        "direction": "left"
     }
 }
 
@@ -101,53 +83,46 @@ def _predict_next_position(glider: Glider) -> float:
     return glider.position + velocity
 
 
-def _detect_glider_from_activity(
-    state: List[int], pos: int, min_width: int = 20
+def _find_exact_glider_pattern(
+    state: List[int], pos: int, glider_type: str, tolerance: int = 0
+) -> bool:
+    """
+    Check if Cook's exact glider pattern matches at position.
+
+    This is Cook-faithful: uses exact measured patterns, no inference.
+    """
+    if glider_type not in COOK_GLIDER_PATTERNS:
+        return False
+
+    pattern = COOK_GLIDER_PATTERNS[glider_type]
+    n = len(state)
+
+    # Check if pattern fits at position
+    if pos + len(pattern) > n:
+        return False
+
+    # Exact pattern matching (Cook-faithful)
+    window = state[pos : pos + len(pattern)]
+
+    # Allow some tolerance for phase differences
+    matches = sum(1 for a, b in zip(window, pattern) if a == b)
+    match_ratio = matches / len(pattern)
+
+    return match_ratio >= (1.0 - tolerance * 0.1)  # Tolerance as 10% mismatch
+
+
+def _detect_glider_from_exact_patterns(
+    state: List[int], pos: int
 ) -> Optional[str]:
     """
-    Detect glider presence using activity patterns, faithful to Cook's visual method.
+    Detect glider using Cook's exact measured patterns.
 
-    Cook identifies gliders by periodic activity in the ether background.
-    This looks for active regions that could represent gliders.
+    Absolutely faithful to Cook: no activity-based detection or inference.
     """
-    n = len(state)
-    if pos >= n:
-        return None
-
-    # Look for active region around position with smaller window
-    active_region = []
-    for i in range(max(0, pos-7), min(n, pos+8)):
-        if state[i] == 1:
-            active_region.append(i)
-
-    if len(active_region) < 2:  # Need at least some activity
-        return None
-
-    width = max(active_region) - min(active_region) + 1
-    if width > min_width:  # Too wide for a single glider
-        return None
-
-    # Classify based on activity pattern and position in construction
-    active_count = len(active_region)
-
-    # Use position hints to classify gliders (based on CTS construction layout)
-    if pos < 30:  # Early positions likely have Ē gliders (moving data)
-        if active_count >= 3:
-            return "Ē"
-    elif pos < 60:  # Middle positions have C2 gliders (tape data)
-        if active_count >= 4:
-            return "C2"
-    else:  # Later positions have A/B gliders (control)
-        if active_count >= 5:
-            return "A"  # Default to A for right-moving control
-
-    # Fallback classification based on activity density
-    if active_count >= 6:  # Dense activity suggests A or B gliders
-        return "A"
-    elif active_count >= 4:  # Moderate activity suggests C gliders
-        return "C2"
-    elif active_count >= 2:  # Sparse activity suggests Ē
-        return "Ē"
+    # Try each known glider pattern at this position
+    for glider_type in COOK_GLIDER_PATTERNS:
+        if _find_exact_glider_pattern(state, pos, glider_type, tolerance=1):
+            return glider_type
 
     return None
 
@@ -175,47 +150,60 @@ def _calculate_spacing_relationships(
 
 def _detect_collision(glider1: Glider, glider2: Glider) -> Optional[Tuple[str, str]]:
     """
-    Detect glider collisions using Cook's collision rules.
+    Detect glider collisions using Cook's ! and ! distance analysis.
 
-    Based on Cook's collision analysis in Section 3.2.3 and 4.4.
-    Returns (collision_type, description) or None if no collision.
+    Cook Section 3.2.3: Collisions determined by distance relationships,
+    not spatial proximity. Uses ether triangle measurements.
     """
-    if abs(glider1.position - glider2.position) > 5:
-        return None  # Not close enough
+    from ether_distances import calculate_over_distance, calculate_under_distance
 
-    # Check width conservation (glider widths sum mod 14)
+    # Calculate Cook's distance measurements
+    over_dist = calculate_over_distance(glider1.position, glider2.position)
+    under_dist = calculate_under_distance(glider1.position, glider2.position)
+
+    # Check width conservation (glider widths sum mod 14) - Cook's invariant
     w1 = GLIDER_PROPERTIES[glider1.glider_type]["width"]
     w2 = GLIDER_PROPERTIES[glider2.glider_type]["width"]
     total_width = (w1 + w2) % 14
 
-    # Collision detection based on Cook's specific descriptions
+    # Collision detection based on Cook's specific distance relationships
 
-    # Fundamental collisions from Cook's analysis
-    if glider1.glider_type == "A" and glider2.glider_type == "B":
-        return ("annihilation", "A+B mutual annihilation (widths sum to 0 mod 14)")
+    # Ē crossing C2: key CTS operation (Cook Section 4.2)
+    # Occurs at specific ! and ! distances
+    if glider1.glider_type == "Ē" and glider2.glider_type == "C2":
+        # Cook's crossing collision occurs when Ē is !3 from C2
+        if over_dist == 3:
+            return ("crossing", f"Ē crossing C2 at !={over_dist}, !={under_dist} (tape read)")
 
-    elif glider1.glider_type == "Ē" and glider2.glider_type == "C2":
-        return ("crossing", "Ē crossing C2 (tape symbol read operation)")
+    elif glider1.glider_type == "C2" and glider2.glider_type == "Ē":
+        # Same collision, different order
+        if calculate_over_distance(glider2.position, glider1.position) == 3:
+            return ("crossing", f"C2 crossed by Ē at !={over_dist}, !={under_dist} (tape read)")
 
+    # A+B mutual annihilation (Cook Section 3.2.3)
+    elif glider1.glider_type == "A" and glider2.glider_type == "B":
+        return ("annihilation", f"A+B annihilation (!={over_dist}, !={under_dist}, width sum={total_width})")
+
+    # A converting Ē to C2 (ossification - Cook Section 4.3)
     elif glider1.glider_type == "A" and glider2.glider_type == "Ē":
-        return ("conversion", "A converting Ē to C2 (ossification)")
+        return ("conversion", f"A converting Ē to C2 (!={over_dist}, !={under_dist})")
 
-    elif glider1.glider_type == "A" and glider2.glider_type == "C2":
-        return ("reflection", "A reflecting off C2")
-
-    # Complex collisions from Section 4.4
+    # Control signal collisions (Cook Section 4.4)
     elif glider1.glider_type in ["A", "B"] and glider2.glider_type in ["A", "B"]:
-        return ("control", f"control signal collision ({glider1.glider_type}+{glider2.glider_type})")
+        return ("control", f"control collision {glider1.glider_type}+{glider2.glider_type} (!={over_dist}, !={under_dist})")
 
+    # Ē+Ē interactions (moving data collisions)
     elif glider1.glider_type == "Ē" and glider2.glider_type == "Ē":
-        # Ē+Ē collisions can indicate moving data interactions
-        return ("data_interaction", "Ē+Ē moving data interaction")
+        return ("data_interaction", f"Ē+Ē interaction (!={over_dist}, !={under_dist})")
 
-    else:
-        return ("unknown", f"{glider1.glider_type}+{glider2.glider_type} collision (width sum: {total_width})")
+    # A reflecting off C2
+    elif glider1.glider_type == "A" and glider2.glider_type == "C2":
+        return ("reflection", f"A reflecting off C2 (!={over_dist}, !={under_dist})")
+
+    return None
 
 
-def track_gliders(history: List[List[int]]) -> GliderTrack:
+def track_gliders(history: List[List[int]], progress_callback=None) -> GliderTrack:
     """
     Track gliders through CA evolution using Cook's spacing and collision method.
 
@@ -225,20 +213,35 @@ def track_gliders(history: List[List[int]]) -> GliderTrack:
     gliders: List[Glider] = []
     collisions: List[Tuple[int, int, str]] = []
     current_width_sum = 0
+    total_steps = len(history)
+
+    # Initial progress callback
+    if progress_callback:
+        progress_callback(0, total_steps, "initializing", {})
 
     for step, state in enumerate(history):
         # Detect gliders in current state using activity patterns
         detected_gliders: List[Tuple[int, str]] = []
 
-        # Scan for glider activity (Cook's visual method)
+        # Scan for exact glider patterns (Cook-faithful)
         pos = 0
-        while pos < len(state):
-            glider_type = _detect_glider_from_activity(state, pos)
+        state_length = len(state)
+        scan_progress = 0
+
+        while pos < state_length:
+            glider_type = _detect_glider_from_exact_patterns(state, pos)
             if glider_type:
                 detected_gliders.append((pos, glider_type))
-                pos += 15  # Skip ahead (glider width)
+                pos += len(COOK_GLIDER_PATTERNS[glider_type])  # Skip pattern length
             else:
                 pos += 1
+
+            # Progress callback for pattern scanning
+            scan_progress += 1
+            if progress_callback and scan_progress % 50 == 0:  # Update every 50 positions
+                progress_callback(step, total_steps, "scanning_patterns",
+                                {"current_pos": pos, "state_length": state_length,
+                                 "detected_gliders": len(detected_gliders)})
 
         # Match detected gliders to existing tracked gliders
         matched = set()
@@ -291,28 +294,43 @@ def track_gliders(history: List[List[int]]) -> GliderTrack:
                     step_last_seen=step,
                 ))
 
-        # Check for collisions between nearby gliders
+        # Check for collisions between nearby gliders (only if they're close)
         active_gliders = [g for g in gliders if g.step_last_seen == step]
 
         for i, g1 in enumerate(active_gliders):
             for g2 in active_gliders[i+1:]:
+                # Only check collisions if gliders are very close (actually colliding)
+                distance = abs(g1.position - g2.position)
+                if distance > 8:  # Only check if within 8 cells (gliders are ~6-17 cells wide)
+                    continue
+                    
                 collision_result = _detect_collision(g1, g2)
                 if collision_result:
                     collision_type, description = collision_result
-                    collisions.append((
-                        step,
-                        int((g1.position + g2.position) / 2),
-                        f"{collision_type}: {description}"
-                    ))
+                    # Only record significant computational collisions
+                    if collision_type in ['crossing', 'annihilation', 'conversion']:
+                        collisions.append((
+                            step,
+                            int((g1.position + g2.position) / 2),
+                            f"{collision_type}: {description}"
+                        ))
 
         # Update width sum (conserved quantity from Cook's Section 3.1)
         current_width_sum = sum(
             GLIDER_PROPERTIES[g.glider_type]["width"] for g in active_gliders
         ) % 14
 
+        # Final progress callback
+        if progress_callback:
+            progress_callback(total_steps, total_steps, "complete",
+                            {"final_gliders": len(gliders),
+                             "final_collisions": len(collisions),
+                             "final_width_sum": current_width_sum})
+
     return GliderTrack(
         gliders=gliders,
         collisions=collisions,
         width_sum=current_width_sum
     )
+
 

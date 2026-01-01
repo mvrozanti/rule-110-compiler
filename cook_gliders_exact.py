@@ -32,3 +32,8 @@ ETHER_PATTERN = [0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0]
 
 # Additional gliders needed for Cook's construction
 # TODO: Find exact patterns for B, C1, D1, D2 gliders
+
+
+
+
+

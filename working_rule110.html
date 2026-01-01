@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Rule 110 - IT WORKS</title>
+    <style>
+        body { background: #000; color: #fff; font-family: monospace; margin: 20px; }
+        canvas { border: 2px solid #fff; background: #000; display: block; margin: 20px 0; }
+        button { background: #444; color: #fff; border: 1px solid #666; padding: 10px 20px; margin: 5px; cursor: pointer; }
+        button:hover { background: #666; }
+        .info { background: #222; padding: 10px; margin: 10px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Rule 110 - WORKING VERSION</h1>
+
+    <div class="info">
+        <strong>Input:</strong> <span id="input">0001000</span><br>
+        <strong>Current step:</strong> <span id="step">0</span><br>
+        <strong>Active cells:</strong> <span id="active">1</span>
+    </div>
+
+    <div>
+        <button onclick="reset()">Reset</button>
+        <button onclick="step()">Step Forward</button>
+        <button onclick="run()">Run Animation</button>
+        <button onclick="stop()">Stop</button>
+    </div>
+
+    <canvas id="canvas" width="700" height="400"></canvas>
+
+    <div class="info">
+        <h3>How to read this:</h3>
+        <ul>
+            <li>Each row = one time step</li>
+            <li>Time flows DOWNWARD</li>
+            <li>White squares = active cells (1)</li>
+            <li>Black squares = inactive cells (0)</li>
+            <li>Bottom row = current state</li>
+        </ul>
+    </div>
+
+    <script>
+        // RULE 110 IMPLEMENTATION
+        const RULE_110 = { '111':0, '110':1, '101':1, '100':0, '011':1, '010':1, '001':1, '000':0 };
+
+        function rule110_step(state) {
+            const next = [];
+            for (let i = 0; i < state.length; i++) {
+                const left = i > 0 ? state[i-1] : 0;
+                const center = state[i];
+                const right = i < state.length - 1 ? state[i+1] : 0;
+                const key = `${left}${center}${right}`;
+                next.push(RULE_110[key]);
+            }
+            return next;
+        }
+
+        // CANVAS SETUP
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const CELL_SIZE = 8; // BIG PIXELS SO YOU CAN SEE THEM
+        const VISIBLE_ROWS = 40; // Show last 40 steps
+
+        // INITIAL STATE
+        let currentState = [0,0,0,1,0,0,0]; // Simple pattern
+        let history = [currentState.slice()];
+        let running = false;
+        let animationId;
+
+        function draw() {
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw grid lines for clarity
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+
+            // Vertical lines (space)
+            for (let x = 0; x <= currentState.length; x++) {
+                ctx.beginPath();
+                ctx.moveTo(x * CELL_SIZE, 0);
+                ctx.lineTo(x * CELL_SIZE, canvas.height);
+                ctx.stroke();
+            }
+
+            // Horizontal lines (time)
+            for (let y = 0; y <= VISIBLE_ROWS; y++) {
+                ctx.beginPath();
+                ctx.moveTo(0, y * CELL_SIZE);
+                ctx.lineTo(canvas.width, y * CELL_SIZE);
+                ctx.stroke();
+            }
+
+            // Draw cells
+            const startRow = Math.max(0, history.length - VISIBLE_ROWS);
+            for (let row = 0; row < Math.min(history.length, VISIBLE_ROWS); row++) {
+                const state = history[startRow + row];
+                const y = row * CELL_SIZE;
+
+                for (let col = 0; col < state.length; col++) {
+                    const x = col * CELL_SIZE;
+
+                    if (state[col]) {
+                        ctx.fillStyle = '#fff'; // WHITE for active cells
+                        ctx.fillRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+                    }
+                    // Inactive cells stay black (background)
+                }
+            }
+
+            // Label current state
+            ctx.fillStyle = '#ff6';
+            ctx.font = '12px monospace';
+            ctx.fillText('CURRENT STATE:', 10, canvas.height - 30);
+            ctx.fillText(currentState.join(''), 10, canvas.height - 15);
+
+            // Update info
+            document.getElementById('step').textContent = history.length - 1;
+            document.getElementById('active').textContent = currentState.filter(x => x).length;
+            document.getElementById('input').textContent = history[0].join('');
+        }
+
+        function step() {
+            currentState = rule110_step(currentState);
+            history.push(currentState.slice());
+            draw();
+        }
+
+        function run() {
+            if (running) return;
+            running = true;
+
+            function animate() {
+                if (!running) return;
+                step();
+                if (history.length < 100) { // Limit history
+                    animationId = requestAnimationFrame(animate);
+                } else {
+                    stop();
+                }
+            }
+            animate();
+        }
+
+        function stop() {
+            running = false;
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+        }
+
+        function reset() {
+            stop();
+            currentState = [0,0,0,1,0,0,0];
+            history = [currentState.slice()];
+            draw();
+        }
+
+        // Start
+        draw();
+    </script>
+</body>
+</html>
+
+
+
+
+

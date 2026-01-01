@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Simple Rule 110 Demo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; font-family: monospace; padding: 10px; }
+        #controls { position: fixed; top: 10px; left: 10px; color: #fff; }
+        #controls input, #controls select { background: #111; border: 1px solid #333; color: #fff; padding: 4px; margin: 2px; }
+        #controls button { background: #333; border: 1px solid #666; color: #fff; padding: 4px 8px; margin: 2px; cursor: pointer; }
+        #viz { position: fixed; top: 60px; left: 0; right: 0; bottom: 0; background: #000; overflow: auto; }
+        #canvas { display: block; background: #000; }
+        #info { position: fixed; top: 10px; right: 10px; color: #ccc; font-size: 12px; max-width: 300px; }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <select id="pattern">
+            <option value="single">Single Cell</option>
+            <option value="glider">Glider Pattern</option>
+            <option value="random">Random</option>
+            <option value="block">Block</option>
+        </select>
+        <button onclick="reset()">Reset</button>
+        <button onclick="step()">Step</button>
+        <button onclick="run()">Run</button>
+        <button onclick="stop()">Stop</button>
+    </div>
+
+    <div id="info">
+        <div><strong>Rule 110:</strong> Each cell becomes 1 if exactly 1 or 2 neighbors are 1</div>
+        <div><strong>Time:</strong> <span id="step">0</span></div>
+        <div><strong>Active cells:</strong> <span id="active">0</span></div>
+        <div><strong>Pattern:</strong> <span id="pattern_name">Single Cell</span></div>
+    </div>
+
+    <div id="viz"><canvas id="canvas"></canvas></div>
+
+    <script>
+        // Rule 110 implementation
+        function rule110(left, center, right) {
+            const rules = {
+                0b111: 0, 0b110: 1, 0b101: 1, 0b100: 0,
+                0b011: 1, 0b010: 1, 0b001: 1, 0b000: 0
+            };
+            const pattern = (left << 2) | (center << 1) | right;
+            return rules[pattern];
+        }
+
+        function stepAutomaton(state) {
+            const next = new Array(state.length);
+            for (let i = 0; i < state.length; i++) {
+                const left = i > 0 ? state[i-1] : 0;
+                const center = state[i];
+                const right = i < state.length - 1 ? state[i+1] : 0;
+                next[i] = rule110(left, center, right);
+            }
+            return next;
+        }
+
+        // Patterns
+        const patterns = {
+            single: () => {
+                const state = new Array(100).fill(0);
+                state[50] = 1;
+                return state;
+            },
+            glider: () => [0,1,1,0,1,1,1,0,0,1,1,1],
+            random: () => Array.from({length: 100}, () => Math.random() > 0.7 ? 1 : 0),
+            block: () => {
+                const state = new Array(100).fill(0);
+                for (let i = 45; i < 55; i++) state[i] = 1;
+                return state;
+            }
+        };
+
+        let currentState = patterns.single();
+        let history = [currentState.slice()];
+        let running = false;
+        let animationId;
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight - 60;
+        }
+
+        function draw() {
+            const cellSize = 4;
+            const cols = Math.floor(canvas.width / cellSize);
+            const rows = Math.min(history.length, Math.floor(canvas.height / cellSize));
+
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let row = 0; row < rows; row++) {
+                const state = history[row];
+                if (!state) continue;
+
+                for (let col = 0; col < Math.min(state.length, cols); col++) {
+                    if (state[col]) {
+                        ctx.fillStyle = '#fff';
+                        ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+                    }
+                }
+            }
+
+            // Update info
+            document.getElementById('step').textContent = history.length - 1;
+            document.getElementById('active').textContent = currentState.filter(x => x).length;
+        }
+
+        function reset() {
+            const patternName = document.getElementById('pattern').value;
+            currentState = patterns[patternName]();
+            history = [currentState.slice()];
+            document.getElementById('pattern_name').textContent = patternName;
+            draw();
+        }
+
+        function step() {
+            currentState = stepAutomaton(currentState);
+            history.push(currentState.slice());
+            draw();
+        }
+
+        function run() {
+            if (running) return;
+            running = true;
+            function animate() {
+                if (!running) return;
+                step();
+                if (history.length < 200) { // Limit history
+                    animationId = requestAnimationFrame(animate);
+                } else {
+                    stop();
+                }
+            }
+            animate();
+        }
+
+        function stop() {
+            running = false;
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+        }
+
+        // Initialize
+        window.addEventListener('resize', () => { resize(); draw(); });
+        document.getElementById('pattern').addEventListener('change', reset);
+
+        resize();
+        draw();
+    </script>
+</body>
+</html>
+
+
+
+
+

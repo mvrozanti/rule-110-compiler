@@ -224,3 +224,8 @@ def validate_cook_distances(glider_positions: List[Tuple[str, int]],
             return False
 
     return True
+
+
+
+
+

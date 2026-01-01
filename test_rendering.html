@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Rendering Test</title>
+    <style>
+        body { background: #000; color: #fff; font-family: monospace; padding: 20px; }
+        canvas { border: 1px solid #333; display: block; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <h1>Rule 110 Rendering Test</h1>
+    <p>Testing if basic canvas rendering works...</p>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        // Simple Rule 110 test
+        const rule = { '111':0, '110':1, '101':1, '100':0, '011':1, '010':1, '001':1, '000':0 };
+        function step(s) { return s.map((c,i) => rule[`${i>0?s[i-1]:0}${c}${i<s.length-1?s[i+1]:0}`]); }
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Create test data
+        let state = Array(50).fill(0);
+        state[25] = 1; // Single 1 in middle
+
+        let history = [state.slice()];
+        for (let i = 0; i < 30; i++) {
+            state = step(state);
+            history.push(state.slice());
+        }
+
+        // Render
+        const cellSize = 4;
+        canvas.width = history[0].length * cellSize;
+        canvas.height = history.length * cellSize;
+
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        for (let step = 0; step < history.length; step++) {
+            const state = history[step];
+            const y = step * cellSize;
+
+            for (let x = 0; x < state.length; x++) {
+                if (state[x]) {
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(x * cellSize, y, cellSize, cellSize);
+                } else {
+                    ctx.fillStyle = '#111';
+                    ctx.fillRect(x * cellSize, y, cellSize, cellSize);
+                }
+            }
+        }
+
+        // Add labels
+        ctx.fillStyle = '#ff6';
+        ctx.font = '12px monospace';
+        ctx.fillText('Active cells = white', 10, canvas.height - 30);
+        ctx.fillText('Inactive cells = dark gray', 10, canvas.height - 15);
+        ctx.fillText('Time flows DOWN', 10, 20);
+
+        document.body.innerHTML += '<p>Canvas rendered successfully! White = active cells, dark gray = inactive cells.</p>';
+    </script>
+</body>
+</html>
+
+
+
+
+

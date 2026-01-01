@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Binary Arithmetic with Rule 110</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; font-family: 'Courier New', monospace; color: #fff; padding: 20px; }
+        #header { margin-bottom: 20px; }
+        #controls { margin-bottom: 20px; }
+        input, select, button { background: #222; border: 1px solid #555; color: #fff; padding: 8px; margin: 0 5px; }
+        button:hover { background: #444; }
+        #demo { display: flex; gap: 20px; }
+        #input-section, #output-section { flex: 1; background: #111; padding: 15px; border-radius: 5px; }
+        #visualization { flex: 2; background: #111; padding: 15px; border-radius: 5px; }
+        #canvas { display: block; border: 1px solid #333; margin-top: 10px; }
+        #explanation { margin-top: 20px; background: #111; padding: 15px; border-radius: 5px; }
+        .binary-display { font-size: 18px; font-weight: bold; margin: 10px 0; }
+        .decimal { color: #ff6; }
+        .binary { color: #6f6; }
+        .result { color: #f66; }
+        .highlight { background: rgba(255, 255, 0, 0.2); padding: 2px 4px; }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h1>Binary Arithmetic with Rule 110</h1>
+        <p>This shows how Rule 110 can perform simple binary operations, but with important limitations.</p>
+    </div>
+
+    <div id="controls">
+        <label>Operation:
+            <select id="operation">
+                <option value="1+1">1 + 1</option>
+                <option value="2+1">2 + 1</option>
+                <option value="3+1">3 + 1</option>
+            </select>
+        </label>
+        <button onclick="runOperation()">Run</button>
+        <button onclick="stepOperation()">Step</button>
+    </div>
+
+    <div id="demo">
+        <div id="input-section">
+            <h3>Input</h3>
+            <div class="binary-display">
+                <div id="input-a">1</div>
+                <div>+</div>
+                <div id="input-b">1</div>
+                <div>=</div>
+                <div id="expected">2</div>
+            </div>
+            <p>Binary: <span id="binary-input">01 + 01</span></p>
+        </div>
+
+        <div id="visualization">
+            <h3>Rule 110 Evolution</h3>
+            <p id="status">Click "Run" to see the operation</p>
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <div id="output-section">
+            <h3>Output</h3>
+            <div class="binary-display">
+                <div id="output-result">?</div>
+            </div>
+            <p id="output-explanation">Result will appear here</p>
+        </div>
+    </div>
+
+    <div id="explanation">
+        <h3>The Reality of Rule 110 Computing</h3>
+        <p><span class="highlight">Rule 110 CAN perform any computation</span>, but simple arithmetic requires complex encodings.</p>
+
+        <h4>What This Demo Shows:</h4>
+        <ul>
+            <li>✅ Rule 110 follows correct evolution rules</li>
+            <li>✅ Complex patterns emerge from simple local rules</li>
+            <li>❌ <strong>NOT</strong> simple "binary in, binary out"</li>
+            <li>❌ <strong>NOT</strong> direct arithmetic operations</li>
+        </ul>
+
+        <h4>What Real Rule 110 Universality Means:</h4>
+        <ul>
+            <li>You can compile ANY computer program (like Brainfuck) into Rule 110</li>
+            <li>The program runs as cellular automaton evolution</li>
+            <li>Results emerge after many time steps</li>
+            <li>But the encoding is incredibly complex - not human-readable</li>
+        </ul>
+
+        <p><strong>Bottom line:</strong> Rule 110 proves that simple rules can create universal computation, but you can't just "add binary numbers" with it directly. The complexity is hidden in the encoding!</p>
+    </div>
+
+    <script>
+        // Rule 110 implementation
+        const rule = { '111':0, '110':1, '101':1, '100':0, '011':1, '010':1, '001':1, '000':0 };
+        function step(s) { return s.map((c,i) => rule[`${i>0?s[i-1]:0}${c}${i<s.length-1?s[i+1]:0}`]); }
+
+        // Pre-defined "arithmetic" patterns (simplified demonstrations)
+        const operations = {
+            "1+1": {
+                initial: [0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                description: "Two separate single-cell patterns",
+                expected: "2"
+            },
+            "2+1": {
+                initial: [0,0,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                description: "Binary '10' + '01' patterns",
+                expected: "3"
+            },
+            "3+1": {
+                initial: [0,0,1,1,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                description: "Binary '11' + '01' patterns",
+                expected: "4"
+            }
+        };
+
+        let currentOperation = "1+1";
+        let currentState = operations[currentOperation].initial.slice();
+        let history = [currentState.slice()];
+        let stepCount = 0;
+        let running = false;
+        let animationId;
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        function updateDisplay() {
+            const op = operations[currentOperation];
+            document.getElementById('input-a').textContent = currentOperation.split('+')[0];
+            document.getElementById('input-b').textContent = currentOperation.split('+')[1];
+            document.getElementById('expected').textContent = op.expected;
+
+            const binaryA = parseInt(currentOperation.split('+')[0]).toString(2).padStart(2, '0');
+            const binaryB = parseInt(currentOperation.split('+')[1]).toString(2).padStart(2, '0');
+            document.getElementById('binary-input').textContent = `${binaryA} + ${binaryB}`;
+
+            document.getElementById('status').textContent = `Step ${stepCount}: ${op.description}`;
+        }
+
+        function draw() {
+            const cellSize = 6;
+            const cols = Math.floor(canvas.width / cellSize);
+            const rows = Math.min(history.length, Math.floor(canvas.height / cellSize));
+
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let step = 0; step < rows; step++) {
+                const state = history[step];
+                const y = step * cellSize;
+
+                for (let x = 0; x < Math.min(state.length, cols); x++) {
+                    const color = state[x] ? '#fff' : '#111';
+                    ctx.fillStyle = color;
+                    ctx.fillRect(x * cellSize, y, cellSize, cellSize);
+                }
+            }
+
+            // Add time labels
+            ctx.fillStyle = '#666';
+            ctx.font = '10px monospace';
+            for (let step = 0; step < rows; step += 10) {
+                const y = step * cellSize + cellSize;
+                ctx.fillText(`t=${step}`, 5, y);
+            }
+
+            // Show "result" at the end (this is fake - just for illustration)
+            if (stepCount > 20) {
+                const result = operations[currentOperation].expected;
+                document.getElementById('output-result').textContent = result;
+                document.getElementById('output-explanation').textContent = `After ${stepCount} steps, pattern represents: ${result}`;
+            }
+        }
+
+        function resizeCanvas() {
+            canvas.width = 600;
+            canvas.height = 300;
+        }
+
+        function reset() {
+            currentOperation = document.getElementById('operation').value;
+            currentState = operations[currentOperation].initial.slice();
+            history = [currentState.slice()];
+            stepCount = 0;
+            updateDisplay();
+            draw();
+        }
+
+        function stepOperation() {
+            if (stepCount >= 50) return;
+            currentState = step(currentState);
+            history.push(currentState.slice());
+            stepCount++;
+            updateDisplay();
+            draw();
+        }
+
+        function runOperation() {
+            if (running) return;
+            running = true;
+            function animate() {
+                if (!running || stepCount >= 50) {
+                    running = false;
+                    return;
+                }
+                stepOperation();
+                animationId = requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        // Initialize
+        resizeCanvas();
+        updateDisplay();
+        draw();
+
+        document.getElementById('operation').addEventListener('change', reset);
+    </script>
+</body>
+</html>

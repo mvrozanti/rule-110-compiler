@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Glider Identification</title>
+</head>
+<body>
+    <h1>Testing Glider Input Identification Logic</h1>
+    <div id="output"></div>
+
+    <script>
+        // Test the glider identification logic
+        const inputRegionRanges = [
+            {start: 56, end: 62},
+            {start: 116, end: 127}
+        ];
+
+        const mockGliderTracks = [
+            {start_pos: 122.0, velocity: 0.67, start_step: 0, end_step: 80},
+            {start_pos: 113.0, velocity: 0.67, start_step: 0, end_step: 14},
+            {start_pos: 176.0, velocity: 0.67, start_step: 0, end_step: 80},
+            {start_pos: 58.0, velocity: 0.67, start_step: 5, end_step: 80}, // Should be near input
+            {start_pos: 120.0, velocity: 0.67, start_step: 3, end_step: 80}, // Should be near input
+        ];
+
+        function testGliderIdentification() {
+            const glidersFromInput = new Set();
+
+            mockGliderTracks.forEach((track, idx) => {
+                const startPos = Math.round(track.start_pos);
+                const startStep = track.start_step;
+
+                // Check if this glider could have originated from input regions
+                let couldBeFromInput = false;
+                inputRegionRanges.forEach(r => {
+                    // For each input region, check if glider could have come from there
+                    for (let stepsBack = 1; stepsBack <= Math.min(startStep, 50); stepsBack++) {
+                        const estimatedOriginPos = startPos - track.velocity * stepsBack;
+                        if (estimatedOriginPos >= r.start && estimatedOriginPos < r.end) {
+                            couldBeFromInput = true;
+                            break;
+                        }
+                    }
+                });
+
+                // Also check direct proximity for gliders that start very early
+                const nearInputRegion = inputRegionRanges.some(r => {
+                    const spatialDistance = Math.abs(startPos - (r.start + r.end) / 2);
+                    return spatialDistance < 20 && startStep < 10; // Very close and very early
+                });
+
+                if (couldBeFromInput || nearInputRegion) {
+                    glidersFromInput.add(idx);
+                }
+
+                console.log(`Glider ${idx}: pos=${startPos}, step=${startStep}, fromInput=${couldBeFromInput || nearInputRegion}`);
+            });
+
+            return glidersFromInput;
+        }
+
+        const result = testGliderIdentification();
+        document.getElementById('output').innerHTML = `
+            <p>Input regions: ${inputRegionRanges.map(r => `${r.start}-${r.end}`).join(', ')}</p>
+            <p>Gliders marked as from input: ${result.size} (indices: ${Array.from(result).join(', ')})</p>
+        `;
+    </script>
+</body>
+</html>
+
+
+
+

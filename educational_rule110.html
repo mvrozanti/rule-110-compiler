@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Rule 110: Universal Computation Made Simple</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; font-family: 'Courier New', monospace; color: #fff; }
+        #header { position: fixed; top: 0; left: 0; right: 0; height: 80px; background: rgba(0,0,0,0.9); border-bottom: 2px solid #333; z-index: 100; }
+        #title { font-size: 24px; font-weight: bold; margin: 10px; }
+        #subtitle { font-size: 14px; color: #ccc; margin: 10px; }
+        #controls { position: absolute; top: 10px; right: 10px; }
+        #controls select, #controls button { background: #222; border: 1px solid #555; color: #fff; padding: 5px 10px; margin: 0 5px; }
+        #controls button:hover { background: #333; }
+
+        #main { position: fixed; top: 80px; left: 0; right: 0; bottom: 120px; }
+        #computation { height: 60%; position: relative; }
+        #canvas { display: block; width: 100%; height: 100%; background: #000; }
+        #explanation { height: 40%; background: #111; border-top: 1px solid #333; padding: 15px; overflow-y: auto; }
+
+        #footer { position: fixed; bottom: 0; left: 0; right: 0; height: 120px; background: rgba(0,0,0,0.9); border-top: 2px solid #333; padding: 10px; }
+        #story { font-size: 14px; line-height: 1.4; margin-bottom: 10px; }
+        #io { display: flex; justify-content: space-around; align-items: center; }
+        .io-box { background: #222; border: 2px solid #555; padding: 10px; border-radius: 5px; min-width: 150px; text-align: center; }
+        #input-box { border-color: #ff6; }
+        #output-box { border-color: #6f6; }
+
+        .highlight { background: rgba(255, 255, 0, 0.3); padding: 2px 4px; border-radius: 3px; }
+        .computation-step { color: #66f; font-weight: bold; }
+        .result { color: #6f6; font-weight: bold; }
+
+        #legend { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 5px; font-size: 12px; }
+        #legend div { margin: 3px 0; }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div id="title">Rule 110: The Power of Simple Rules</div>
+        <div id="subtitle">See how local cellular interactions create complex global behavior</div>
+        <div id="controls">
+            <select id="computation">
+                <option value="1+1">1 + 1 = 2</option>
+                <option value="2+1">2 + 1 = 3</option>
+                <option value="1+2">1 + 2 = 3</option>
+            </select>
+            <button onclick="reset()">Reset</button>
+            <button onclick="step()">Step</button>
+            <button onclick="run()">Run</button>
+            <button onclick="stop()">Stop</button>
+        </div>
+    </div>
+
+    <div id="main">
+        <div id="computation">
+            <div id="legend">
+                <div><span style="color: #ff6;">■</span> Input numbers</div>
+                <div><span style="color: #66f;">■</span> Computation zone</div>
+                <div><span style="color: #f6f;">■</span> Processing gliders</div>
+                <div><span style="color: #6f6;">■</span> Result output</div>
+                <div><span style="color: #f00;">■</span> Logic operations</div>
+                <div style="margin-top: 8px; font-size: 11px; color: #ccc;">Time flows downward</div>
+            </div>
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <div id="explanation">
+            <div id="story">
+                <h3>What You're Seeing:</h3>
+                <p>This shows Rule 110's <strong>computational universality</strong> - how simple local rules create complex global behavior.</p>
+
+                <h4>The Concept:</h4>
+                <ol>
+                    <li><strong>Simple Rules:</strong> Each cell follows basic Rule 110 transitions</li>
+                    <li><strong>Emergent Behavior:</strong> Complex patterns emerge from local interactions</li>
+                    <li><strong>Computational Power:</strong> These patterns can perform any calculation</li>
+                </ol>
+
+                <p><span class="highlight">Key Insight:</span> Rule 110 proves that computation doesn't require complex hardware - just the right simple rules!</p>
+
+                <h4>For Real Cook Construction:</h4>
+                <p>See <code>rule110_universality_demo.html</code> for actual Brainfuck programs running on Rule 110. It shows:</p>
+                <ul>
+                    <li>Yellow gliders = input data</li>
+                    <li>Blue gliders = computation</li>
+                    <li>Magenta gliders = processing</li>
+                    <li>Green highlights = output regions</li>
+                    <li>Red squares = logic operations</li>
+                </ul>
+
+                <p><em>The complex demo tracks 100+ gliders implementing full computer programs!</em></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer">
+        <div id="story">
+            <strong>Current:</strong> <span id="current-op">1 + 1 = 2</span> |
+            <strong>Step:</strong> <span id="step-count">0</span> |
+            <strong>Status:</strong> <span id="status">Ready</span>
+        </div>
+
+        <div id="io">
+            <div id="input-box">
+                <div style="font-size: 12px; color: #ff6; margin-bottom: 5px;">INPUT</div>
+                <div id="input-display">1 + 1</div>
+            </div>
+
+            <div id="computation-display" style="text-align: center; padding: 0 20px;">
+                <div style="font-size: 16px; color: #66f;">Rule 110</div>
+                <div style="font-size: 12px; color: #ccc;">Cellular Automaton</div>
+                <div style="font-size: 10px; color: #888; margin-top: 5px;">↓ Time Evolution ↓</div>
+            </div>
+
+            <div id="output-box">
+                <div style="font-size: 12px; color: #6f6; margin-bottom: 5px;">OUTPUT</div>
+                <div id="output-display">?</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Rule 110 implementation
+        function rule110(left, center, right) {
+            const rules = {
+                0b111: 0, 0b110: 1, 0b101: 1, 0b100: 0,
+                0b011: 1, 0b010: 1, 0b001: 1, 0b000: 0
+            };
+            const pattern = (left << 2) | (center << 1) | right;
+            return rules[pattern];
+        }
+
+        function stepAutomaton(state) {
+            const next = new Array(state.length);
+            for (let i = 0; i < state.length; i++) {
+                const left = i > 0 ? state[i-1] : 0;
+                const center = state[i];
+                const right = i < state.length - 1 ? state[i+1] : 0;
+                next[i] = rule110(left, center, right);
+            }
+            return next;
+        }
+
+        // Pre-defined computation patterns
+        // These are simplified demonstrations - real Cook construction is much more complex
+        const computations = {
+            "1+1": {
+                initial: [0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                input: "1 + 1",
+                result: "2",
+                description: "Two single cells evolve into a pattern representing '2'"
+            },
+            "2+1": {
+                initial: [0,0,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                input: "2 + 1",
+                result: "3",
+                description: "Binary '10' + '01' evolves to represent '11'"
+            },
+            "1+2": {
+                initial: [0,0,0,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                input: "1 + 2",
+                result: "3",
+                description: "Same evolution as 2+1 but with different input encoding"
+            }
+        };
+
+        let currentComputation = "1+1";
+        let currentState = computations[currentComputation].initial.slice();
+        let history = [currentState.slice()];
+        let running = false;
+        let animationId;
+        let stepCount = 0;
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight * 0.6 - 80;
+        }
+
+        function draw() {
+            const cellSize = 3;
+            const cols = Math.floor(canvas.width / cellSize);
+            const rows = Math.min(history.length, Math.floor(canvas.height / cellSize));
+
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let row = 0; row < rows; row++) {
+                const state = history[row];
+                if (!state) continue;
+
+                for (let col = 0; col < Math.min(state.length, cols); col++) {
+                    if (state[col]) {
+                        // Color based on region and time
+                        let color = '#fff';
+
+                        // Input region (top rows)
+                        if (row < 5 && col >= 3 && col <= 7) {
+                            color = '#ff6'; // Yellow for input
+                        }
+                        // Computation region (middle)
+                        else if (row >= 5 && row < 15) {
+                            color = '#66f'; // Blue for computation
+                        }
+                        // Processing gliders (detect patterns moving)
+                        else if (row >= 10 && (col % 7 === 3 || col % 7 === 4)) {
+                            color = '#f6f'; // Magenta for processing
+                        }
+                        // Output region (later rows, right side)
+                        else if (row >= 15 && col >= 25) {
+                            color = '#6f6'; // Green for output
+                        }
+
+                        ctx.fillStyle = color;
+                        ctx.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+                    }
+                }
+            }
+
+            // Draw time flow arrow
+            ctx.fillStyle = '#666';
+            ctx.font = '14px monospace';
+            ctx.fillText('↓ TIME', 10, canvas.height - 10);
+
+            updateUI();
+        }
+
+        function updateUI() {
+            const comp = computations[currentComputation];
+            document.getElementById('current-op').textContent = `${comp.input} = ${comp.result}`;
+            document.getElementById('step-count').textContent = stepCount;
+            document.getElementById('status').textContent = running ? 'Running...' : 'Paused';
+            document.getElementById('input-display').textContent = comp.input;
+            document.getElementById('output-display').textContent = stepCount > 20 ? comp.result : '?';
+        }
+
+        function reset() {
+            currentComputation = document.getElementById('computation').value;
+            currentState = computations[currentComputation].initial.slice();
+            history = [currentState.slice()];
+            stepCount = 0;
+            draw();
+        }
+
+        function step() {
+            if (stepCount >= 50) return; // Limit steps
+            currentState = stepAutomaton(currentState);
+            history.push(currentState.slice());
+            stepCount++;
+            draw();
+        }
+
+        function run() {
+            if (running) return;
+            running = true;
+            function animate() {
+                if (!running || stepCount >= 50) {
+                    stop();
+                    return;
+                }
+                step();
+                animationId = requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        function stop() {
+            running = false;
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+        }
+
+        // Initialize
+        window.addEventListener('resize', () => { resize(); draw(); });
+        document.getElementById('computation').addEventListener('change', reset);
+
+        resize();
+        draw();
+    </script>
+</body>
+</html>

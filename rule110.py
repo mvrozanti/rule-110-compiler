@@ -34,7 +34,8 @@ class Rule110:
             pad: Optional extra padding to add once at start
         """
         self.boundary = boundary
-        self.ether_pattern = ether_pattern or [1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0]
+        # Cook's exact ether pattern: 00010011011110
+        self.ether_pattern = ether_pattern or [0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0]
         self.pad = pad
         self.state = (list(initial_state) if pad == 0
                       else [0] * pad + list(initial_state) + [0] * pad)
@@ -45,7 +46,7 @@ class Rule110:
         next_state = []
         pad = 3  # small halo for expansion
         n = len(self.state)
-        
+
         # Build working state with optional ether padding (non-wrapping)
         if self.boundary == 'ether':
             ether = self.ether_pattern
@@ -54,17 +55,17 @@ class Rule110:
         else:
             left_pad = [0] * pad
             right_pad = [0] * pad
-        
+
         working = left_pad + self.state + right_pad
-        wn = len(working)
-        
-        for i in range(wn):
-            left = working[i - 1] if i > 0 else 0
+
+        # Compute next state only for original positions (skip padding)
+        for i in range(pad, pad + n):
+            left = working[i - 1]
             center = working[i]
-            right = working[i + 1] if i < wn - 1 else 0
+            right = working[i + 1]
             next_cell = self._rule110(left, center, right)
             next_state.append(next_cell)
-        
+
         self.state = next_state
         self.history.append(list(self.state))
     

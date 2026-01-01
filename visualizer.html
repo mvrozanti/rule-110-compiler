@@ -7,6 +7,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #000; padding: 10px; font-family: monospace; }
         #input { position: fixed; top: 10px; left: 10px; padding: 6px 10px; background: #111; border: 1px solid #333; color: #fff; font-size: 11px; width: 220px; }
+        #instructions { position: fixed; top: 10px; right: 10px; color: #ccc; font-size: 11px; width: 250px; line-height: 1.4; background: rgba(0,0,0,0.8); padding: 8px; border-radius: 4px; }
         #input:focus { outline: none; border-color: #555; }
         #viz { display: flex; flex-direction: column; gap: 0; margin-top: 40px; }
         .row { display: flex; gap: 0; line-height: 0; }
@@ -19,6 +20,16 @@
 </head>
 <body>
     <input type="text" id="input" value="arith:add(15, 31)" autocomplete="off">
+    <div id="instructions">
+        <div style="font-weight: bold; margin-bottom: 6px; color: #fff;">Rule 110 Arithmetic Demo</div>
+        <div style="margin-bottom: 4px;"><strong>→</strong> Space flows LEFT to RIGHT</div>
+        <div style="margin-bottom: 4px;"><strong>↓</strong> Time flows DOWNWARD</div>
+        <div style="margin-bottom: 6px;">Each horizontal row = one time step</div>
+        <div style="font-size: 10px; color: #999;">
+        Try: arith:add(15,31), arith:multiply(6,7)<br>
+        Rule 110 computes through glider collisions!
+        </div>
+    </div>
     <div id="viz"></div>
     <script>
         const rule = { '111':0, '110':1, '101':1, '100':0, '011':1, '010':1, '001':1, '000':0 };

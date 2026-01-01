@@ -21,6 +21,7 @@ class TuringMachine:
     accept_state: str
     reject_state: str
     blank_symbol: str
+    output_states: List[str]  # States that should output when entered
 
 
 @dataclass
@@ -46,7 +47,12 @@ def parse_brainfuck(program: str) -> TuringMachine:
     # Turing machine components
     states = []
     transitions = {}
-    alphabet = ['0', '1']  # Binary representation of cell values
+    output_states = []  # Track states that should output when entered
+    # Use unary encoding: blank/0 = 0, '1' = 1, '11' = 2, '111' = 3, etc.
+    # For simplicity in TM representation, we'll use a marker-based approach
+    # Each cell value N is represented as N consecutive '1's followed by '0' delimiter
+    # But actually, let's use direct digit representation for simplicity (0-9)
+    alphabet = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
     blank_symbol = '0'
 
     # Generate states for each position in program
@@ -57,6 +63,18 @@ def parse_brainfuck(program: str) -> TuringMachine:
     accept_state = f'q{len(program)}'  # After last instruction
     reject_state = 'q_reject'
 
+    # Find matching brackets for loops
+    bracket_pairs = {}
+    bracket_stack = []
+    for i, cmd in enumerate(program):
+        if cmd == '[':
+            bracket_stack.append(i)
+        elif cmd == ']':
+            if bracket_stack:
+                start = bracket_stack.pop()
+                bracket_pairs[start] = i
+                bracket_pairs[i] = start
+
     # Build transitions
     pc = 0  # Program counter
 
@@ -65,46 +83,71 @@ def parse_brainfuck(program: str) -> TuringMachine:
         command = program[pc]
 
         if command == '+':
-            # Increment: if 0->1, if 1->0 (mod 2 for simplicity)
-            transitions[(current_state, '0')] = (f'q{pc+1}', '1', 'S')  # Stay
-            transitions[(current_state, '1')] = (f'q{pc+1}', '0', 'S')
+            # Increment: properly increment digit value
+            # 0->1, 1->2, ..., 8->9, 9->0 (wrap around, Brainfuck cells are bytes)
+            for digit in range(10):
+                digit_char = str(digit)
+                next_digit = (digit + 1) % 10
+                transitions[(current_state, digit_char)] = (f'q{pc+1}', str(next_digit), 'S')
 
         elif command == '-':
-            # Decrement: same as increment in mod 2
-            transitions[(current_state, '0')] = (f'q{pc+1}', '1', 'S')
-            transitions[(current_state, '1')] = (f'q{pc+1}', '0', 'S')
+            # Decrement: properly decrement digit value
+            # 0->9 (wrap), 1->0, 2->1, ..., 9->8
+            for digit in range(10):
+                digit_char = str(digit)
+                next_digit = (digit - 1) % 10
+                transitions[(current_state, digit_char)] = (f'q{pc+1}', str(next_digit), 'S')
 
         elif command == '>':
-            # Move right: shift head right
-            transitions[(current_state, '0')] = (f'q{pc+1}', '0', 'R')
-            transitions[(current_state, '1')] = (f'q{pc+1}', '1', 'R')
+            # Move right: shift head right (works for all digits)
+            for digit_char in alphabet:
+                transitions[(current_state, digit_char)] = (f'q{pc+1}', digit_char, 'R')
 
         elif command == '<':
-            # Move left: shift head left
-            transitions[(current_state, '0')] = (f'q{pc+1}', '0', 'L')
-            transitions[(current_state, '1')] = (f'q{pc+1}', '1', 'L')
+            # Move left: shift head left (works for all digits)
+            for digit_char in alphabet:
+                transitions[(current_state, digit_char)] = (f'q{pc+1}', digit_char, 'L')
 
         elif command == '.':
-            # Output: mark output and continue
-            transitions[(current_state, '0')] = (f'q{pc+1}', '0', 'S')
-            transitions[(current_state, '1')] = (f'q{pc+1}', '1', 'S')
+            # Output: mark next state as output state and continue (works for all digits)
+            output_states.append(f'q{pc+1}')  # The state we transition TO should output
+            for digit_char in alphabet:
+                transitions[(current_state, digit_char)] = (f'q{pc+1}', digit_char, 'S')
 
         elif command == ',':
-            # Input: read from input tape (simplified)
-            transitions[(current_state, '0')] = (f'q{pc+1}', '1', 'S')  # Read 1
-            transitions[(current_state, '1')] = (f'q{pc+1}', '0', 'S')  # Read 0
+            # Input: read from input tape (simplified - read first char)
+            for digit_char in alphabet:
+                transitions[(current_state, digit_char)] = (f'q{pc+1}', '0', 'S')  # Simplified
 
         elif command == '[':
             # Loop start: if current cell is 0, jump to matching ]
-            # This is complex - simplified version
-            transitions[(current_state, '0')] = (f'q{pc+1}', '0', 'S')  # Continue
-            transitions[(current_state, '1')] = (f'q{pc+1}', '1', 'S')  # Continue
+            # Otherwise continue into loop
+            if pc in bracket_pairs:
+                loop_end = bracket_pairs[pc]
+                # If cell is 0, jump to after the loop
+                transitions[(current_state, '0')] = (f'q{loop_end+1}', '0', 'S')
+                # If cell is non-zero, continue into loop
+                for digit_char in alphabet[1:]:  # All digits except '0'
+                    transitions[(current_state, digit_char)] = (f'q{pc+1}', digit_char, 'S')
+            else:
+                # Unmatched bracket - just continue
+                for digit_char in alphabet:
+                    transitions[(current_state, digit_char)] = (f'q{pc+1}', digit_char, 'S')
 
         elif command == ']':
-            # Loop end: if current cell is 1, jump back to matching [
-            # Simplified - just continue
-            transitions[(current_state, '0')] = (f'q{pc+1}', '0', 'S')
-            transitions[(current_state, '1')] = (f'q{pc+1}', '1', 'S')
+            # Loop end: if current cell is non-zero, jump back to matching [
+            # Otherwise continue after loop
+            if pc in bracket_pairs:
+                loop_start = bracket_pairs[pc]
+                # If cell is 0, exit loop (continue to next instruction)
+                transitions[(current_state, '0')] = (f'q{pc+1}', '0', 'S')
+                # If cell is non-zero, jump back to loop start
+                for digit_char in alphabet[1:]:  # All digits except '0'
+                    transitions[(current_state, digit_char)] = (f'q{loop_start+1}', digit_char, 'S')
+            else:
+                # Unmatched bracket - just continue
+                for digit_char in alphabet:
+                    transitions[(current_state, digit_char)] = (f'q{pc+1}', digit_char, 'S')
 
         pc += 1
 
@@ -115,7 +158,8 @@ def parse_brainfuck(program: str) -> TuringMachine:
         initial_state=initial_state,
         accept_state=accept_state,
         reject_state=reject_state,
-        blank_symbol=blank_symbol
+        blank_symbol=blank_symbol,
+        output_states=output_states
     )
 
 
@@ -149,6 +193,11 @@ def execute_turing_machine(tm: TuringMachine, input_tape: str = "",
 
         new_state, new_symbol, move = tm.transitions[key]
 
+        # Check if we're transitioning TO a state that should output
+        if hasattr(tm, 'output_states') and new_state in tm.output_states:
+            # Output the current cell value before transition
+            output.append(current_symbol)
+
         # Apply transition
         tape.head = new_symbol
         current_state = new_state
@@ -160,10 +209,6 @@ def execute_turing_machine(tm: TuringMachine, input_tape: str = "",
         elif move == 'L':
             tape.right.insert(0, tape.head)
             tape.head = tape.left.pop() if tape.left else tm.blank_symbol
-
-        # Handle output (simplified)
-        if current_symbol != tape.head:  # Cell changed
-            output.append(tape.head)
 
         steps += 1
 
@@ -209,3 +254,4 @@ def test_compilation():
 
 if __name__ == '__main__':
     test_compilation()
+

@@ -144,3 +144,8 @@ This implementation provides:
 ---
 
 *Built with absolute Cook faithfulness in mind, this represents the culmination of implementing Cook's 2004 universality proof with modern computational tools.*
+
+
+
+
+
