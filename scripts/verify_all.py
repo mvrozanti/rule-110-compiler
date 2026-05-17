@@ -23,6 +23,10 @@ PHASES = [
      ["pytest", "tests/test_tagsystem.py", "-q"]),
     ("Phase 5: TM -> aligned tag (Cook s2.1)",
      ["pytest", "tests/test_tm_to_tagsystem.py", "-q"]),
+    ("Phase 5: aligned tag -> CTS (Cook s2.2)",
+     ["pytest", "tests/test_aligned_to_cts.py", "-q"]),
+    ("Phase 5: end-to-end BF -> TM -> tag -> CTS chain",
+     ["pytest", "tests/test_chain_bf_to_cts.py", "-q"]),
     ("Phase 6: BF parser + BF->TM lowering",
      ["pytest", "tests/test_bf_to_tm.py", "-q"]),
     ("Phase 8: Viz parity (gliders.js mirrors gliders.py)",
@@ -32,21 +36,21 @@ PHASES = [
 NOT_YET = [
     "Phase 2: Cook glider E (15, -4) -- 5/6 verified; E shares velocity "
     "with Ebar and was not isolated in 2000-seed random-IC sweep nor in "
-    "2-glider collision sweeps.",
-    "Phase 3: collision table -- scripts/collide.py sandbox lands but the "
-    "documented Cook collisions are not yet encoded as test fixtures.",
-    "Phase 4: cts_to_r110.py encoder -- needs phase 3 collisions + a "
-    "small set of CTS-encoding gliders placed at Cook ether-distances.",
-    "Phase 5: tag_to_cts with alignment -- compiler/tagsystem_to_cts.py "
-    "handles standard 1-tag; aligned 2-tag with use_offset metadata needs "
-    "the 'pad with K Ns to shift alignment' trick from Cook s2.2.",
+    "2-glider collision sweeps at widths up to 18.",
+    "Phase 3: verified collision table -- scripts/collide.py sandbox lands "
+    "but the documented Cook collisions are not yet encoded as test fixtures.",
+    "Phase 4: cts_to_r110.py encoder -- needs phase 3 collisions plus a "
+    "set of CTS-encoding gliders placed at Cook ether-distances.",
     "Phase 5: tm_to_tagsystem on non-zero initial tape -- currently xfailed; "
-    "needs a transformation that fills undefined (k, z) transitions with "
-    "synthesized ones to the same k', so that alignment-flips during L/R "
-    "pair processing always find a valid production.",
-    "Phase 7: end-to-end BF -> R110 -- blocked on phase 3 / 4 / 5.",
-    "Phase 8: cross-layer linking in viz -- once tm_to_cts is online, the "
-    "four panes can share a single t map.",
+    "needs more careful alignment tracking through L/R pair processing.",
+    "Phase 5: multi-cell BF -> 2-symbol TM -- compile_bf produces 8-symbol "
+    "TMs; Cook s2.1 needs 2-symbol input. Hand-mapping works for trivial "
+    "programs (test_chain_bf_to_cts uses bf '+'). A unary-encoding pass "
+    "would unblock all BF programs.",
+    "Phase 7: end-to-end BF -> R110 -- blocked on phase 2 (E) / 3 / 4.",
+    "Phase 8: cross-layer hover linking in viz -- region_map from compile-"
+    "time would let hover on any pane highlight the corresponding cells in "
+    "the others. Blocked on phase 4 emitting the region_map.",
 ]
 
 
