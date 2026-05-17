@@ -18,7 +18,8 @@ BF source --> TM --> CTS --> Rule 110 initial bitstring --> evolution --> decode
 | 0 | scaffold | verified |
 | 1 | `core/rule110.py` | verified |
 | 1 | `core/ether.py` | verified |
-| 2 | Cook gliders (C1, C2, A, B, E, Ebar) | not-started |
+| 2 | Cook glider A | verified |
+| 2 | Cook gliders B, C, D, E, Ebar | candidates fail isolation — see `docs/gliders_status.md` |
 | 3 | verified collisions | not-started |
 | 4 | `compiler/cts.py` pure simulator | not-started |
 | 4 | `compiler/cts_to_r110.py` encoder | not-started |
