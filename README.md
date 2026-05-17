@@ -23,7 +23,8 @@ BF source --> TM --> CTS --> Rule 110 initial bitstring --> evolution --> decode
 | 3 | verified collisions | not-started |
 | 4 | `compiler/cts.py` pure simulator | verified |
 | 4 | `compiler/cts_to_r110.py` encoder | blocked on Phase 2/3 |
-| 5 | `compiler/tm_to_cts.py` (Neary-Woods) | not-started |
+| 5 | `compiler/tagsystem.py` + `compiler/tagsystem_to_cts.py` | verified |
+| 5 | `compiler/tm_to_tagsystem.py` (Cook §2.1) | not-started — alignment subtlety |
 | 6 | `compiler/bf.py` + `compiler/bf_to_tm.py` | verified |
 | 7 | `runtime/evolve.py` + `runtime/decode.py` | not-started |
 | 7 | end-to-end on `+`, `+++.`, `+[-]` | not-started |
