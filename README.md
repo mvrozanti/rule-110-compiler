@@ -28,8 +28,9 @@ BF source --> TM --> CTS --> Rule 110 initial bitstring --> evolution --> decode
 | 5 | `compiler/tagsystem.py` + `compiler/tagsystem_to_cts.py` | verified |
 | 5 | `compiler/tm_to_tagsystem.py` (Cook §2.1) | not-started — alignment subtlety |
 | 6 | `compiler/bf.py` + `compiler/bf_to_tm.py` | verified |
-| 7 | `runtime/evolve.py` + `runtime/decode.py` | not-started |
-| 7 | end-to-end on `+`, `+++.`, `+[-]` | not-started |
+| 7 | `runtime/evolve.py` + `runtime/decode.py` | blocked on Phase 2/3/4/5 |
+| 7 | end-to-end on `+`, `+++.`, `+[-]` | blocked |
+| 7 | `scripts/verify_all.py` (status report) | verified |
 | 8 | visualization (4 independent panes) | first cut shipped, needs user review |
 | 8 | visualization (cross-layer linking) | blocked on Phase 5 (tm→cts) |
 
