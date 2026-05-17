@@ -38,7 +38,11 @@ The cellular-automaton layer must be exactly Cook's:
 
 - Glider patterns sourced (cite `15-1-1.pdf` §X.Y or an external reference table).
   No inferred or hand-waved patterns.
-- Ether is the exact 14-cell period: `(0,0,0,1,0,0,1,1,0,1,1,1,1,0)`.
+- Ether is the exact 14-cell period `(1,1,1,1,1,0,0,0,1,0,0,1,1,0)`,
+  translating 4 cells left per step, temporal period 7. Verified in
+  `tests/test_ether.py`. (The prior codebase used a different 14-bit string
+  that does **not** reproduce under Rule 110 — a load-bearing example of why
+  every primitive needs an empirical test.)
 - Collisions are designed, not timed. Operations emerge from glider interactions,
   not from artificial wall-clock dispatch.
 - Spacing uses Cook's α (diagonal) and β (vertical) ether-distance arithmetic

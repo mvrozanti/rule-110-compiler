@@ -16,8 +16,8 @@ BF source --> TM --> CTS --> Rule 110 initial bitstring --> evolution --> decode
 |---|---|---|
 | 0 | tabula rasa cleanup | verified |
 | 0 | scaffold | verified |
-| 1 | `core/rule110.py` | not-started |
-| 1 | `core/ether.py` | not-started |
+| 1 | `core/rule110.py` | verified |
+| 1 | `core/ether.py` | verified |
 | 2 | Cook gliders (C1, C2, A, B, E, Ebar) | not-started |
 | 3 | verified collisions | not-started |
 | 4 | `compiler/cts.py` pure simulator | not-started |
@@ -34,10 +34,10 @@ valid state and must be named honestly.
 
 ## Quickstart
 
-After Phase 1:
+Enter the dev shell, then run the tests for each phase:
 
 ```sh
-pytest tests/test_rule110.py tests/test_ether.py
+nix develop --command pytest tests/test_rule110.py tests/test_ether.py
 ```
 
 After Phase 7 (the universality demonstration):
