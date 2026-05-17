@@ -76,3 +76,34 @@ def test_chain_pipeline_uses_2k_appendant_structure():
     assert any(len(app) > 0 for app in real_half), (
         "at least one real appendant should be non-empty"
     )
+
+
+def bf_plus_plus_as_two_symbol_tm() -> TM:
+    return TM(
+        transitions={
+            ("q0", 0): ("q1", 1, "R"),
+            ("q1", 0): ("qhalt", 1, "R"),
+        },
+        initial_state="q0",
+        initial_tape=(0, 0, 0),
+        initial_head=0,
+        blank=0,
+    )
+
+
+def test_bf_plus_plus_chains_through_full_pipeline():
+    tm = bf_plus_plus_as_two_symbol_tm()
+    ats = build_aligned_tag(tm)
+    atag_history = run_atag(ats, max_steps=2000)
+    final_atag = atag_history[-1]
+    decoded = decode_atag(final_atag.tape, final_atag.use_offset)
+    assert decoded is not None
+    assert decoded.state == "qhalt"
+    assert decoded.tl == 3
+    assert decoded.tr == 0
+
+    cts_spec, sym_idx, prefix = build_cts_from_aligned(ats)
+    cts_history = run_cts(cts_spec, max_steps=200000)
+    assert cts_history[-1].halted, (
+        f"CTS did not halt; tape size {len(cts_history[-1].tape)}"
+    )
