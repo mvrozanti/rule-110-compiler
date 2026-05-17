@@ -14,26 +14,27 @@ import {
   ACCENT, BG, BF_OP, CELL_OFF, CELL_ON, CTS_N, CTS_Y,
   ETHER_OFF, ETHER_ON, stateColor,
 } from "./colors.js";
+import { GLIDERS, buildICFromPlacements, etherAt, etherWindow } from "./gliders.js";
 
 const RULE_110 = {
   "111": 0, "110": 1, "101": 1, "100": 0,
   "011": 1, "010": 1, "001": 1, "000": 0,
 };
 
-function r110Step(state) {
+function r110Step(state, useEther) {
   const next = new Array(state.length);
   for (let i = 0; i < state.length; i++) {
-    const l = i > 0 ? state[i-1] : 0;
+    const l = i > 0 ? state[i-1] : (useEther ? etherAt(i-1) : 0);
     const c = state[i];
-    const r = i < state.length - 1 ? state[i+1] : 0;
+    const r = i < state.length - 1 ? state[i+1] : (useEther ? etherAt(i+1) : 0);
     next[i] = RULE_110[`${l}${c}${r}`];
   }
   return next;
 }
 
-function r110History(initial, steps) {
+function r110History(initial, steps, useEther) {
   const h = [initial.slice()];
-  for (let t = 0; t < steps; t++) h.push(r110Step(h[h.length-1]));
+  for (let t = 0; t < steps; t++) h.push(r110Step(h[h.length-1], useEther));
   return h;
 }
 
@@ -118,9 +119,15 @@ function ctsTrace(spec, maxSteps = 200) {
 }
 
 // --- Rule 110 IC parsing ---
+// Accepts either a raw bitstring "00111..." or a glider-placement spec
+// "A@30,Ebar@80,C@200". The placement form requires ether boundary.
 
-function parseR110IC(text) {
-  return text.trim().split("").map(c => c === "1" ? 1 : 0);
+function parseR110IC(text, width) {
+  const t = text.trim();
+  if (/^[01]+$/.test(t)) {
+    return { state: t.split("").map(c => c === "1" ? 1 : 0), placements: [], useEther: false };
+  }
+  return { ...buildICFromPlacements(t, width), useEther: true };
 }
 
 // --- Rendering ---
@@ -210,11 +217,11 @@ function drawCTS(ctx, spec, trace, t, w, h) {
   ctx.fillText(`cts step ${Math.min(t, trace.length - 1)} / ${trace.length - 1}   appendants: ${spec.appendants.map(a => a || "_").join(", ")}`, 6, h - 8);
 }
 
-function drawR110(ctx, hist, t, w, h) {
+function drawR110(ctx, hist, t, w, h, placements, useEther) {
   ctx.fillStyle = BG;
   ctx.fillRect(0, 0, w, h);
   const width = hist[0].length;
-  const cellSize = Math.min(8, Math.floor((w - 20) / width));
+  const cellSize = Math.min(6, Math.max(2, Math.floor((w - 20) / width)));
   const rows = Math.min(hist.length, Math.floor((h - 30) / cellSize));
   const startStep = Math.max(0, Math.min(t, hist.length - 1) - rows + 1);
   for (let r = 0; r < rows; r++) {
@@ -223,17 +230,47 @@ function drawR110(ctx, hist, t, w, h) {
     const row = hist[stepIdx];
     const y = r * cellSize + 10;
     for (let c = 0; c < width; c++) {
-      ctx.fillStyle = row[c] ? CELL_ON : ETHER_OFF;
-      ctx.fillRect(c * cellSize + 8, y, cellSize - 1, cellSize - 1);
+      let color;
+      if (useEther) {
+        const expected = etherAt(c + 4 * stepIdx);
+        if (row[c] === expected) {
+          color = expected ? "#222" : "#0f0f0f";
+        } else {
+          color = row[c] ? "#e8e8e8" : "#888";
+        }
+      } else {
+        color = row[c] ? CELL_ON : ETHER_OFF;
+      }
+      ctx.fillStyle = color;
+      ctx.fillRect(c * cellSize + 8, y, cellSize, cellSize);
+    }
+    if (placements && placements.length) {
+      for (const p of placements) {
+        const projectedAnchor = p.anchor + stepIdx * p.glider.displacement;
+        const minOff = Math.min(...p.glider.delta.map(d => d[0]));
+        const maxOff = Math.max(...p.glider.delta.map(d => d[0]));
+        const left = projectedAnchor + minOff;
+        const right = projectedAnchor + maxOff;
+        if (right >= 0 && left < width) {
+          ctx.strokeStyle = p.glider.color;
+          ctx.lineWidth = 1;
+          ctx.strokeRect(
+            Math.max(0, left) * cellSize + 8,
+            y,
+            (Math.min(width, right + 1) - Math.max(0, left)) * cellSize,
+            cellSize
+          );
+        }
+      }
     }
     if (stepIdx === Math.min(t, hist.length - 1)) {
       ctx.fillStyle = ACCENT;
-      ctx.fillRect(2, y, 4, cellSize - 1);
+      ctx.fillRect(2, y, 4, cellSize);
     }
   }
   ctx.fillStyle = "#999";
-  ctx.font = "12px monospace";
-  ctx.fillText(`r110 step ${Math.min(t, hist.length - 1)} / ${hist.length - 1}`, 6, h - 8);
+  ctx.font = "11px monospace";
+  ctx.fillText(`r110 step ${Math.min(t, hist.length - 1)} / ${hist.length - 1}   boundary: ${useEther ? "ether" : "zero"}`, 6, h - 8);
 }
 
 // --- App state ---
@@ -241,7 +278,7 @@ function drawR110(ctx, hist, t, w, h) {
 const state = {
   bfSrc: "+++[->+<]",
   ctsText: "appendants: YN, N\ntape: YY",
-  r110IC: "00000000000000000000000000000000111000000000000000000000000000000",
+  r110IC: "A@30, Ebar@140",
   t: 0,
   maxT: 200,
 };
@@ -251,6 +288,10 @@ let bfTMTraceCache = null;
 let ctsSpecCache = null;
 let ctsTraceCache = null;
 let r110HistCache = null;
+let r110PlacementsCache = [];
+let r110UseEther = true;
+const R110_WIDTH = 200;
+const R110_STEPS = 220;
 
 function recompute() {
   try {
@@ -264,8 +305,15 @@ function recompute() {
     ctsTraceCache = ctsTrace(ctsSpecCache, 400);
   } catch (e) { ctsSpecCache = { appendants: [], tape: [] }; ctsTraceCache = [{tape:[], cursor:0}]; }
   try {
-    r110HistCache = r110History(parseR110IC(state.r110IC), 200);
-  } catch (e) { r110HistCache = [parseR110IC("0")]; }
+    const parsed = parseR110IC(state.r110IC, R110_WIDTH);
+    r110UseEther = parsed.useEther;
+    r110PlacementsCache = parsed.placements;
+    r110HistCache = r110History(parsed.state, R110_STEPS, parsed.useEther);
+  } catch (e) {
+    r110HistCache = [new Array(R110_WIDTH).fill(0)];
+    r110PlacementsCache = [];
+    r110UseEther = false;
+  }
   state.maxT = Math.max(
     bfTraceCache.history.length,
     ctsTraceCache.length,
@@ -278,7 +326,7 @@ function render() {
   drawBF(document.getElementById("bfCanvas").getContext("2d"), state.bfSrc, bfTraceCache, t, document.getElementById("bfCanvas").width, document.getElementById("bfCanvas").height);
   drawTM(document.getElementById("tmCanvas").getContext("2d"), state.bfSrc, bfTMTraceCache, t, document.getElementById("tmCanvas").width, document.getElementById("tmCanvas").height);
   drawCTS(document.getElementById("ctsCanvas").getContext("2d"), ctsSpecCache, ctsTraceCache, t, document.getElementById("ctsCanvas").width, document.getElementById("ctsCanvas").height);
-  drawR110(document.getElementById("r110Canvas").getContext("2d"), r110HistCache, t, document.getElementById("r110Canvas").width, document.getElementById("r110Canvas").height);
+  drawR110(document.getElementById("r110Canvas").getContext("2d"), r110HistCache, t, document.getElementById("r110Canvas").width, document.getElementById("r110Canvas").height, r110PlacementsCache, r110UseEther);
   document.getElementById("tValue").textContent = String(t);
   document.getElementById("tSlider").max = String(state.maxT - 1);
 }
