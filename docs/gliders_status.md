@@ -9,12 +9,12 @@ check passes against `core/rule110.py` and is asserted in
 
 | Glider | (period_t, displacement) | Status                  | Notes |
 |--------|--------------------------|-------------------------|-------|
-| A      | (3, +2)                  | verified                | delta = `0.11` at left_phase 3 |
-| C      | (7, 0)                   | verified                | 6-cell delta at left_phase 8, span 14 |
-| Ebar   | (30, -8)                 | verified                | 13-cell delta at left_phase 6, span 22 |
-| B      | (4, -2)                  | not yet isolated        | scripts/isolate_gliders.py at 120 seeds still misses |
-| D1/2   | (10, +2)                 | not yet isolated        |       |
-| E      | (15, -4)                 | not yet isolated        |       |
+| A      | (3, +2)                  | verified                | 3-cell delta at left_phase 3 |
+| B      | (4, -2)                  | verified                | 10-cell delta at left_phase 9 |
+| C      | (7, 0)                   | verified                | 4-cell delta at left_phase 3 |
+| D      | (10, +2)                 | verified                | 8-cell delta at left_phase 0 |
+| Ebar   | (30, -8)                 | verified                | 7-cell delta at left_phase 10 |
+| E      | (15, -4)                 | not yet found           | same velocity as Ebar; rare in random ICs |
 | F      | (36, -4)                 | not searched            |       |
 | Gn     | (42, -14)                | not searched            |       |
 | H      | (92, -18)                | not searched            |       |

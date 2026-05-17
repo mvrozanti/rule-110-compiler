@@ -32,6 +32,11 @@ export const GLIDERS = {
     delta: [[0, 0], [1, 0], [6, 1], [10, 1]],
     color: "#0ff",
   },
+  D: {
+    name: "D", period: 10, displacement: 2, left_phase: 0,
+    delta: [[0, 0], [1, 0], [3, 0], [4, 0], [5, 1], [6, 1], [9, 1], [10, 1]],
+    color: "#80ff80",
+  },
   Ebar: {
     name: "Ebar", period: 30, displacement: -8, left_phase: 10,
     delta: [[0, 1], [2, 0], [4, 0], [8, 0], [9, 1], [11, 1], [13, 1]],

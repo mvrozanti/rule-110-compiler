@@ -15,11 +15,11 @@ period_t * n steps, the same delta must reappear at offset +n*displacement.
 
 Status (2026-05-17):
     A    verified
+    B    verified
     C    verified
+    D    verified
     Ebar verified
-    B    candidate identified, fails isolation verification
-    D    candidate identified, fails isolation verification
-    E    candidate identified, fails isolation verification
+    E    not yet found (same velocity as Ebar; rare in random ICs)
 
 See docs/gliders_status.md for current candidates and known gaps. The
 discovery scripts are scripts/discover_gliders.py, scripts/observe_gliders.py,
@@ -90,4 +90,19 @@ B = Glider(
 )
 
 
-ALL_VERIFIED: tuple[Glider, ...] = (A, B, C, Ebar)
+D = Glider(
+    name="D",
+    period_t=10,
+    displacement=2,
+    left_phase=0,
+    delta=(
+        (0, 0), (1, 0), (3, 0), (4, 0),
+        (5, 1), (6, 1), (9, 1), (10, 1),
+    ),
+    citation="Cook 2004 Fig 5 (D-class: (10, +2)); discovered via "
+             "scripts/track_gliders.py seed=1130 (2000 seeds); verified in isolation. "
+             "Minimal 8-cell delta over 11-cell extent.",
+)
+
+
+ALL_VERIFIED: tuple[Glider, ...] = (A, B, C, D, Ebar)
