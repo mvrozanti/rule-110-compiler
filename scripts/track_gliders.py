@@ -80,13 +80,15 @@ def delta_signature(captured, capture_anchor, capture_t):
     return tuple((o - first, b) for o, b in delta)
 
 
-def run_seed(seed, ic_bits=40, total_steps=200):
-    random.seed(seed)
+def run_seed(seed, ic_bits=None, total_steps=400):
+    rng = random.Random(seed)
+    if ic_bits is None:
+        ic_bits = rng.choice([4, 6, 8, 12, 16, 24, 32, 48, 64])
     width = SPATIAL_PERIOD * 200
     anchor = width // 2
     state = list(ether_window(0, width))
     for k in range(ic_bits):
-        state[anchor + k] = random.randint(0, 1)
+        state[anchor + k] = rng.randint(0, 1)
     state = tuple(state)
 
     snapshots = [state]
@@ -142,7 +144,7 @@ def run_seed(seed, ic_bits=40, total_steps=200):
         v = (c1 - c0) / (t1 - t0)
         for label, T, D in COOK:
             target_v = D / T
-            if abs(v - target_v) > 0.05:
+            if abs(v - target_v) > 0.08:
                 continue
             for try_idx in range(len(traj) // 4, len(traj) - 5, max(1, len(traj) // 5)):
                 tm, cm, lm, rm = traj[try_idx]

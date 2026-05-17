@@ -55,10 +55,11 @@ C = Glider(
     name="C",
     period_t=7,
     displacement=0,
-    left_phase=8,
-    delta=((0, 0), (4, 0), (8, 0), (10, 0), (12, 1), (13, 1)),
+    left_phase=3,
+    delta=((0, 0), (1, 0), (6, 1), (10, 1)),
     citation="Cook 2004 Fig 5 (C-class: (7, 0)); discovered via "
-             "scripts/isolate_gliders.py seed=51 t=700; verified in isolation.",
+             "scripts/track_gliders.py seed=224 (800 seeds); verified in isolation. "
+             "Minimal 4-cell delta over 11-cell extent.",
 )
 
 
@@ -66,13 +67,11 @@ Ebar = Glider(
     name="Ebar",
     period_t=30,
     displacement=-8,
-    left_phase=6,
-    delta=(
-        (0, 1), (2, 0), (3, 1), (4, 1), (5, 0), (7, 1),
-        (10, 0), (11, 0), (13, 1), (17, 1), (19, 0), (20, 0), (21, 1),
-    ),
+    left_phase=10,
+    delta=((0, 1), (2, 0), (4, 0), (8, 0), (9, 1), (11, 1), (13, 1)),
     citation="Cook 2004 Fig 5 (Ē: (30, -8)); discovered via "
-             "scripts/isolate_gliders.py seed=27 t=400; verified in isolation.",
+             "scripts/track_gliders.py seed=215 (400 seeds); verified in isolation. "
+             "Smaller minimal form than earlier isolate_gliders capture.",
 )
 
 
@@ -80,17 +79,14 @@ B = Glider(
     name="B",
     period_t=4,
     displacement=-2,
-    left_phase=3,
+    left_phase=9,
     delta=(
-        (0, 0), (1, 0), (2, 1), (3, 1), (5, 0), (7, 1),
-        (10, 1), (12, 0), (13, 0), (14, 0), (18, 1), (21, 1),
-        (24, 1), (26, 0), (28, 0), (30, 1), (31, 1),
-        (33, 0), (34, 1), (35, 1), (36, 0), (37, 0),
+        (0, 1), (1, 1), (5, 0), (6, 0), (8, 0), (9, 0),
+        (10, 1), (11, 1), (14, 1), (15, 1),
     ),
     citation="Cook 2004 Fig 5 (B: (4, -2)); discovered via "
-             "scripts/track_gliders.py seed=106 (200 seeds); verified in isolation. "
-             "This captured form likely contains extra ether ripples beyond the core "
-             "B; minimal-pattern reduction is future work.",
+             "scripts/track_gliders.py seed=577 (800 seeds); verified in isolation. "
+             "Minimal 10-cell delta over 16-cell extent.",
 )
 
 
