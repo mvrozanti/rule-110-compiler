@@ -89,12 +89,13 @@ def test_two_step_run_matches_tm_trace():
 
 
 @pytest.mark.xfail(
-    reason="Cook §2.1 requires both (k, 0) and (k, 1) transitions to be defined "
-           "and to go to the same new state. When (k, 1) is undefined and "
-           "use_offset flips mid-stream due to odd-length R productions, the "
-           "tag system halts on the wrong symbol. Fix: a transformation that "
-           "fills in undefined transitions with synthesized ones to the same "
-           "k'. Tracked for future work.",
+    reason="Cook §2.1 reduction with non-zero initial TL/TR has subtle "
+           "issues in the auxiliary L/R production processing under "
+           "alignment flips. The fill_undefined transformation handles the "
+           "'both transitions defined' requirement, but the cumulative "
+           "result after odd-length appendants still mis-decodes TR. For "
+           "BF programs (always all-zero initial tape) the reduction is "
+           "sufficient. Tracked for future work.",
 )
 def test_unused_initial_bits_do_not_corrupt_tl():
     tm = TM(

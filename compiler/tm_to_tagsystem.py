@@ -69,6 +69,42 @@ def _normalize_directions(tm: TM) -> TM:
     )
 
 
+def _fill_undefined_with_halt(tm: TM) -> TM:
+    """For Cook §2.1: every non-halt state must have transitions for both
+    z=0 and z=1, and both must go to the SAME new state (so that the L/R
+    pair processing produces L_{k'}/R_{k'} consistently regardless of
+    which subscript is read after alignment flips).
+
+    Strategy: collect all states. For each state with at least one defined
+    transition, find the new_state and direction of any defined (k, z).
+    For the other z, synthesize (k, z) -> (same_new_state, z, same_direction).
+    The synthesized transition writes back the read bit (z' = z) so it
+    causes no tape change if ever actually hit, and it preserves k' so the
+    tag-system encoding stays consistent across alignment flips.
+    """
+    states_used = {tm.initial_state}
+    for (s, _), (ns, _, _) in tm.transitions.items():
+        states_used.add(s)
+        states_used.add(ns)
+
+    new_trans = dict(tm.transitions)
+    for k in states_used:
+        defined_z = [z for z in (0, 1) if (k, z) in new_trans]
+        if not defined_z:
+            continue
+        existing_new_state, _, existing_direction = new_trans[(k, defined_z[0])]
+        for z in (0, 1):
+            if (k, z) not in new_trans:
+                new_trans[(k, z)] = (existing_new_state, z, existing_direction)
+    return TM(
+        transitions=new_trans,
+        initial_state=tm.initial_state,
+        initial_tape=tm.initial_tape,
+        initial_head=tm.initial_head,
+        blank=tm.blank,
+    )
+
+
 def _states_in(tm: TM) -> set[str]:
     s = {tm.initial_state}
     for (st, _), (ns, _, _) in tm.transitions.items():
@@ -94,6 +130,7 @@ def _r_star(state: str) -> str:
 
 def build_aligned_tag(tm: TM) -> AlignedTagSystem:
     tm = _normalize_directions(tm)
+    tm = _fill_undefined_with_halt(tm)
     states = _states_in(tm)
     alphabet = {0, 1}
     for sym in {tm.blank}:
