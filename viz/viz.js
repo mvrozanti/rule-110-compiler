@@ -331,6 +331,16 @@ function render() {
   document.getElementById("tSlider").max = String(state.maxT - 1);
 }
 
+const DEMOS = {
+  hello: { bf: "+++[->+<]", cts: "appendants: YN, N\ntape: YY", r110: "A@30, Ebar@140" },
+  move:  { bf: "+++++[->+<]", cts: "appendants: YN, N\ntape: YYY", r110: "C@30, A@80, Ebar@180" },
+  add:   { bf: "++>++[<+>-]", cts: "appendants: YN, N\ntape: YYN", r110: "A@40, A@80, Ebar@150" },
+  cts_id:   { bf: "+", cts: "appendants: Y\ntape: YYYY", r110: "B@40, C@120, D@180" },
+  cts_dup:  { bf: "+", cts: "appendants: YY, _\ntape: Y", r110: "A@30, B@80, C@140, Ebar@200" },
+  r110_chaos:    { bf: "+", cts: "appendants: YN, N\ntape: YY", r110: "00100110100110011001011100110010100110011001011100110010011" },
+  r110_gliders:  { bf: "+", cts: "appendants: YN, N\ntape: YY", r110: "A@20, B@60, C@100, D@140, Ebar@180" },
+};
+
 function init() {
   document.getElementById("bfInput").value = state.bfSrc;
   document.getElementById("ctsInput").value = state.ctsText;
@@ -340,6 +350,21 @@ function init() {
   document.getElementById("ctsInput").addEventListener("input", e => { state.ctsText = e.target.value; recompute(); render(); });
   document.getElementById("r110Input").addEventListener("input", e => { state.r110IC = e.target.value; recompute(); render(); });
   document.getElementById("tSlider").addEventListener("input", e => { state.t = parseInt(e.target.value, 10); render(); });
+  document.getElementById("demoSelect").addEventListener("change", e => {
+    const demo = DEMOS[e.target.value];
+    if (!demo) return;
+    state.bfSrc = demo.bf;
+    state.ctsText = demo.cts;
+    state.r110IC = demo.r110;
+    state.t = 0;
+    document.getElementById("bfInput").value = state.bfSrc;
+    document.getElementById("ctsInput").value = state.ctsText;
+    document.getElementById("r110Input").value = state.r110IC;
+    document.getElementById("tSlider").value = "0";
+    recompute();
+    render();
+    e.target.value = "";
+  });
 
   recompute();
   render();

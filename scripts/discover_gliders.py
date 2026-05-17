@@ -102,8 +102,8 @@ def main() -> None:
         ("C-class stationary", 7, 0, 10, all_phases),
         ("A right-mover",      3, 2, 8, all_phases),
         ("B (4,-2)",           4, -2, 14, all_phases),
-        ("B alt-sign (4,+2)",  4, 2, 12, all_phases),
         ("D (10,+2)",          10, 2, 12, all_phases),
+        ("E (15,-4)",          15, -4, 18, all_phases),
         ("Ebar (30,-8)",       30, -8, 14, all_phases),
     ]
     for label, t, d, max_w, phases in targets:
