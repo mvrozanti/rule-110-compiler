@@ -50,9 +50,20 @@ Implement Cook §2.1 + §2.2 because:
   alignment tracking through L/R-pair processing has subtleties not yet
   fully captured. For BF programs (which always start with all-zero
   tape), the reduction is sufficient.
-- **Multi-symbol BF → 2-symbol TM** is not yet implemented. `compile_bf`
-  produces TMs with alphabet `{0..7}`; Cook §2.1 needs `{0, 1}`. A unary
-  cell-encoding pass would unblock all BF programs through the chain.
+- **Multi-symbol BF → 2-symbol TM**: `compiler/bf_to_2sym_tm.py` lowers
+  BF programs whose cells stay in {0, 1} to a 2-symbol TM (parity-tested
+  against a restricted reference interpreter, see
+  `tests/test_bf_to_2sym_tm.py`). Outside that subset, an additional
+  unary cell-encoding pass would be needed.
+- **2-symbol BF → CTS chain on TMs with S-normalised moves**: the
+  `_normalize_directions` pass inserts an aux state to simulate S as
+  R-then-L. When that aux state is chained through Cook §2.1, the
+  resulting tag system reaches a halt state with the wrong use_offset
+  alignment, so the H_qhalt symbol is consumed before decoding can
+  identify it. R-only TMs (e.g. the manual `+` and `++` TMs in
+  `tests/test_chain_bf_to_cts.py`) round-trip cleanly. Closing this
+  needs either a no-S BF lowering or a halt-alignment fix in the tag
+  system step.
 
 ## References
 

@@ -19,43 +19,50 @@ check passes against `core/rule110.py` and is asserted in
 | Gn     | (42, -14)                | not searched            |       |
 | H      | (92, -18)                | not searched            |       |
 
-## Why the gap
+## What we tried for E
 
-The exhaustive perturbation search (`scripts/discover_gliders.py`) covers
-deltas up to width 12-14 across all 14 ether phases for the small-period
-gliders. Only A appears. Random-IC observation
-(`scripts/observe_gliders.py`) successfully detects the *presence* of all
-gliders in chaotic Rule 110 evolution, but extracting their *minimal bit
-pattern* from chaotic spacetime is producing false positives (3-cell
-patterns that happen to satisfy the periodic-shift check inside the
-chaotic field but do not propagate when placed in clean ether).
+Past sweeps:
+
+- 2000-seed random-IC track sweep (`scripts/track_gliders.py`) found A,
+  B, C, D, Ē in isolation but never E. With the velocity overlap (-0.267)
+  E and Ē compete for the same tracks; the verifier biases toward
+  whichever is checked first.
+- 2-glider collision sweeps (`scripts/find_e_via_collisions.py`) over
+  all pairs of verified gliders and a range of offsets — no clean E.
+
+Latest escalations:
+
+- `scripts/exhaustive_e_search.py` performs a width-N bitmask sweep over
+  all 14 ether phases with strict ether-halo verification (the verifier
+  requires both the captured delta and a 20-cell ether halo to reappear
+  unchanged, eliminating false positives that disturb surrounding ether).
+  Width-14 sweep across all 14 phases (172k candidates) returned **zero
+  hits**.
+- `scripts/exhaustive_e_search_constrained.py` extends to width 19
+  (Cook's natural E1 extent) with a popcount-bounded combinatorial sweep
+  (delta cardinality 5-13 cells, matching what other gliders show). The
+  search space here is ~3.6M candidates; the sweep is partial.
+- `scripts/long_random_e.py` runs 1500-step random-IC evolutions and
+  applies the strict period-15 verifier with period-30 disambiguation
+  (a captured cluster that also verifies under (30, -8) is rejected as
+  Ē, not E).
 
 ## What is needed
 
-Cook's gliders have non-trivial spatial extent — Figure 4 in the paper
-shows them spanning 6-30 pixels. To discover them empirically, the
-search must:
+The pragmatic options:
 
-1. Use wider candidate windows (16-30 cells) and search a larger phase
-   space, possibly with smarter heuristics than exhaustive enumeration.
-2. Or: extract patterns from cleanly-isolated late-time gliders in
-   random simulations, after collisions have annihilated most activity.
-3. Or: read the glider patterns directly from `15-1-1.pdf` Figure 4 or
-   an external reference table (e.g., Wolfram Cellular Automaton Atlas,
-   Martinez & McIntosh tables).
-
-Approach 3 is the most reliable but requires either visual inspection
-of the paper figures or finding an external source with the patterns
-in machine-readable form. The remaining work is in progress; pipeline
-phases that depend on Cook's collision atlas (Phase 3, Phase 4
-`cts_to_r110.py`, Phase 7 end-to-end) are blocked behind this.
+1. Continue the constrained width-19 (and width-27 for E2) exhaustive
+   sweep on a machine that can run it to completion (hours of CPU).
+2. Read the glider patterns directly from `15-1-1.pdf` Figure 4 or an
+   external reference table (Wolfram Atlas, Martinez & McIntosh).
+3. Accept that the construction does not strictly need E — Cook's
+   §4 encoding uses C / Ē / A primarily — and document the
+   incompleteness, which is what the README does.
 
 ## What is unblocked
 
-The pipeline above the Rule 110 layer does not need the gliders:
-
-- Phase 4 `compiler/cts.py` (pure CTS simulator) — pure algorithmic
-- Phase 5 `compiler/tm_to_cts.py` (Neary-Woods reduction) — pure algorithmic
-- Phase 6 `compiler/bf.py` + `compiler/bf_to_tm.py` — pure algorithmic
-
-These can proceed in parallel.
+The construction can proceed without E. The state-encoding round-trip
+(C-glider tape data) is verified
+(`tests/test_cts_to_r110.py`, `tests/test_end_to_end.py`). Closing the
+**collision-driven** version of the CTS encoder remains gated on the
+collision atlas, but that work is empirical — it doesn't need E to start.

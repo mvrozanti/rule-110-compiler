@@ -17,8 +17,12 @@ PHASES = [
      ["pytest", "tests/test_rule110.py", "tests/test_ether.py", "-q"]),
     ("Phase 2: Cook gliders (A, B, C, D, Ebar)",
      ["pytest", "tests/test_gliders.py", "-q"]),
+    ("Phase 3: empirical collision fixtures (C x Ebar crossing, parallels)",
+     ["pytest", "tests/test_collisions.py", "-q"]),
     ("Phase 4: Pure CTS simulator",
      ["pytest", "tests/test_cts.py", "-q"]),
+    ("Phase 4: CTS -> R110 state encoding round-trip",
+     ["pytest", "tests/test_cts_to_r110.py", "-q"]),
     ("Phase 5: Tag system + tag->CTS",
      ["pytest", "tests/test_tagsystem.py", "-q"]),
     ("Phase 5: TM -> aligned tag (Cook s2.1)",
@@ -27,30 +31,42 @@ PHASES = [
      ["pytest", "tests/test_aligned_to_cts.py", "-q"]),
     ("Phase 5: end-to-end BF -> TM -> tag -> CTS chain",
      ["pytest", "tests/test_chain_bf_to_cts.py", "-q"]),
-    ("Phase 6: BF parser + BF->TM lowering",
+    ("Phase 6: BF parser + BF->TM lowering (8-symbol)",
      ["pytest", "tests/test_bf_to_tm.py", "-q"]),
+    ("Phase 6: BF -> 2-symbol TM (Cook s2.1 input)",
+     ["pytest", "tests/test_bf_to_2sym_tm.py", "-q"]),
+    ("Phase 7: end-to-end BF -> R110 IC -> evolve -> decode round-trip",
+     ["pytest", "tests/test_end_to_end.py", "-q"]),
     ("Phase 8: Viz parity (gliders.js mirrors gliders.py)",
      ["pytest", "tests/test_viz_parity.py", "-q"]),
 ]
 
 NOT_YET = [
     "Phase 2: Cook glider E (15, -4) -- 5/6 verified; E shares velocity "
-    "with Ebar and was not isolated in 2000-seed random-IC sweep nor in "
-    "2-glider collision sweeps at widths up to 18.",
-    "Phase 3: verified collision table -- scripts/collide.py sandbox lands "
-    "but the documented Cook collisions are not yet encoded as test fixtures.",
-    "Phase 4: cts_to_r110.py encoder -- needs phase 3 collisions plus a "
-    "set of CTS-encoding gliders placed at Cook ether-distances.",
+    "with Ebar and was not isolated by width-14 exhaustive sweep over all "
+    "phases, the 2000-seed random-IC track, or 2-glider collision sweeps. "
+    "Constrained width-19 popcount sweeps and long random-IC sweeps "
+    "(scripts/exhaustive_e_search_constrained.py, scripts/long_random_e.py) "
+    "are the next escalations.",
+    "Phase 3: full Cook collision atlas -- four collisions verified as test "
+    "fixtures (C x Ebar crossing, A-A/C-C/Ebar-Ebar parallels). The 30+ "
+    "collisions Cook documents in s3.3-s3.5 (leaders firing, components "
+    "accepted/rejected, ossifiers producing tape data) are still empirical "
+    "open work.",
+    "Phase 4: cts_to_r110.py executing CTS *steps* in R110 -- the encoder "
+    "round-trips CTS state through R110, but appendant dynamics (Y "
+    "consumes appendant + appends; N skips) still execute in Python. "
+    "Closing this requires the full collision atlas (Phase 3).",
     "Phase 5: tm_to_tagsystem on non-zero initial tape -- currently xfailed; "
     "needs more careful alignment tracking through L/R pair processing.",
-    "Phase 5: multi-cell BF -> 2-symbol TM -- compile_bf produces 8-symbol "
-    "TMs; Cook s2.1 needs 2-symbol input. Hand-mapping works for trivial "
-    "programs (test_chain_bf_to_cts uses bf '+'). A unary-encoding pass "
-    "would unblock all BF programs.",
-    "Phase 7: end-to-end BF -> R110 -- blocked on phase 2 (E) / 3 / 4.",
-    "Phase 8: cross-layer hover linking in viz -- region_map from compile-"
-    "time would let hover on any pane highlight the corresponding cells in "
-    "the others. Blocked on phase 4 emitting the region_map.",
+    "Phase 5: 2-symbol BF -> CTS chain on programs that aren't R-only TMs "
+    "-- compile_bf_2sym is correct as a TM lowering, but the Cook s2.1 "
+    "alignment math currently halts uncleanly when the TM uses S-normalised "
+    "moves. A redesign that emits only L/R TMs (or a tag-system halt-state "
+    "alignment fix) would unblock arbitrary BF programs through the chain.",
+    "Phase 8: cross-layer hover linking in viz -- the encoder now emits a "
+    "region_map; wiring it into viz/index.html for hover-linked highlights "
+    "remains open.",
 ]
 
 

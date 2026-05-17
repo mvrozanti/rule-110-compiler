@@ -14,20 +14,21 @@ Turing Machine               (states, alphabet, transitions, tape)
 Cyclic Tag System            (alphabet, appendants, tape)
    |
    v  compiler/cts_to_r110.py                      (Phase 4)
-   |  place verified Cook gliders at Cook ether-distances;
-   |  emit region_map for visualization
+   |  state encoding: place a C-glider per Y, ether per N, emit region_map.
+   |  scope note: appendant dynamics still run in compiler/cts.py (python);
+   |  collision-driven CTS step dynamics inside R110 are unfinished.
    v
 Rule 110 initial bitstring
    |
    v  runtime/evolve.py                            (Phase 7)
-   |  step under Rule 110 until halting-glider configuration detected
+   |  step under Rule 110 for a fixed horizon
    v
 Rule 110 final state
    |
    v  runtime/decode.py                            (Phase 7)
-   |  identify surviving gliders -> CTS state -> TM state -> BF tape
+   |  read C-glider presence per region_map slot -> CTS tape Y/N
    v
-Decoded output               "\x03"
+Decoded CTS tape (round-trip)
 ```
 
 The inverse correspondence is what the visualization shows: every glider in
