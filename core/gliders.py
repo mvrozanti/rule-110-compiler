@@ -76,4 +76,22 @@ Ebar = Glider(
 )
 
 
-ALL_VERIFIED: tuple[Glider, ...] = (A, C, Ebar)
+B = Glider(
+    name="B",
+    period_t=4,
+    displacement=-2,
+    left_phase=3,
+    delta=(
+        (0, 0), (1, 0), (2, 1), (3, 1), (5, 0), (7, 1),
+        (10, 1), (12, 0), (13, 0), (14, 0), (18, 1), (21, 1),
+        (24, 1), (26, 0), (28, 0), (30, 1), (31, 1),
+        (33, 0), (34, 1), (35, 1), (36, 0), (37, 0),
+    ),
+    citation="Cook 2004 Fig 5 (B: (4, -2)); discovered via "
+             "scripts/track_gliders.py seed=106 (200 seeds); verified in isolation. "
+             "This captured form likely contains extra ether ripples beyond the core "
+             "B; minimal-pattern reduction is future work.",
+)
+
+
+ALL_VERIFIED: tuple[Glider, ...] = (A, B, C, Ebar)
