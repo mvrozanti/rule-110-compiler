@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>rule-110-compiler: layered visualization</title>
+  <style>
+    :root {
+      --bg: #0b0b0b;
+      --panel: #161616;
+      --border: #2a2a2a;
+      --text: #d0d0d0;
+      --muted: #888;
+      --accent: #7df;
+    }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: ui-monospace, monospace; }
+    header { padding: 14px 18px; border-bottom: 1px solid var(--border); }
+    h1 { margin: 0; font-size: 16px; font-weight: 600; color: var(--text); }
+    .tagline { color: var(--muted); font-size: 11px; margin-top: 4px; }
+    .global { padding: 12px 18px; border-bottom: 1px solid var(--border); display: flex; gap: 14px; align-items: center; }
+    .global label { font-size: 12px; color: var(--muted); }
+    .global input[type=range] { flex: 1; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 1px; background: var(--border); height: calc(100vh - 96px); }
+    .pane { background: var(--panel); display: flex; flex-direction: column; padding: 10px; min-height: 0; min-width: 0; }
+    .pane h2 { margin: 0 0 6px 0; font-size: 12px; font-weight: 600; color: var(--accent); letter-spacing: 0.05em; }
+    .pane .input-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+    .pane textarea, .pane input[type=text] {
+      background: #000; color: var(--text); border: 1px solid var(--border);
+      font-family: ui-monospace, monospace; font-size: 12px; padding: 4px 6px;
+      width: 100%; box-sizing: border-box;
+    }
+    .pane textarea { resize: vertical; min-height: 36px; max-height: 80px; }
+    .pane canvas { flex: 1; background: #000; display: block; width: 100%; height: 100%; }
+    .footer { padding: 6px 18px; color: var(--muted); font-size: 10px; border-top: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>rule-110-compiler &middot; layered visualization</h1>
+    <div class="tagline">brainfuck &middot; turing machine &middot; cyclic tag system &middot; rule 110</div>
+  </header>
+
+  <div class="global">
+    <label>t = <span id="tValue">0</span></label>
+    <input id="tSlider" type="range" min="0" max="200" value="0">
+  </div>
+
+  <div class="grid">
+    <section class="pane">
+      <h2>brainfuck source</h2>
+      <div class="input-row"><input id="bfInput" type="text" value=""></div>
+      <canvas id="bfCanvas" width="600" height="200"></canvas>
+    </section>
+    <section class="pane">
+      <h2>turing machine trace (bf -&gt; tm)</h2>
+      <div class="input-row"><span style="color:var(--muted);font-size:11px">tape rows, head highlighted</span></div>
+      <canvas id="tmCanvas" width="600" height="200"></canvas>
+    </section>
+    <section class="pane">
+      <h2>cyclic tag system</h2>
+      <div class="input-row"><textarea id="ctsInput" rows="2"></textarea></div>
+      <canvas id="ctsCanvas" width="600" height="200"></canvas>
+    </section>
+    <section class="pane">
+      <h2>rule 110 spacetime</h2>
+      <div class="input-row"><input id="r110Input" type="text" value=""></div>
+      <canvas id="r110Canvas" width="600" height="200"></canvas>
+    </section>
+  </div>
+
+  <div class="footer">
+    status: each pane runs independently; cross-layer linking lands with tm-&gt;cts.
+    bf interpreter mirrors compiler/bf_to_tm.py reference; cts mirrors compiler/cts.py; r110 mirrors core/rule110.py.
+  </div>
+
+  <script type="module" src="viz.js"></script>
+</body>
+</html>

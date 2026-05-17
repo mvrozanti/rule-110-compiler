@@ -28,8 +28,8 @@ BF source --> TM --> CTS --> Rule 110 initial bitstring --> evolution --> decode
 | 6 | `compiler/bf.py` + `compiler/bf_to_tm.py` | verified |
 | 7 | `runtime/evolve.py` + `runtime/decode.py` | not-started |
 | 7 | end-to-end on `+`, `+++.`, `+[-]` | not-started |
-| 8 | visualization (2-pane MVP) | not-started |
-| 8 | visualization (4-pane full) | not-started |
+| 8 | visualization (4 independent panes) | first cut shipped, needs user review |
+| 8 | visualization (cross-layer linking) | blocked on Phase 5 (tm→cts) |
 
 A row flips to `verified` only when a green test proves it. `broken` is also a
 valid state and must be named honestly.
@@ -50,7 +50,11 @@ python scripts/verify_all.py
 
 After Phase 8:
 
-Open `viz/index.html` in a browser.
+Open `viz/index.html` in a browser. Four panes: BF source, TM trace,
+CTS evolution, Rule 110 spacetime. A single `t` slider advances all of
+them. Each pane reads its own input field so you can paste BF code, CTS
+appendants/tape, or a Rule 110 initial bitstring and watch them evolve.
+The panes are not yet cross-linked (that needs Phase 5 to be online).
 
 ## See also
 
