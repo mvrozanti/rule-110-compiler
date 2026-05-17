@@ -52,6 +52,49 @@ def build_cts(ts: TagSystem) -> tuple[CTSSpec, dict[str, int]]:
     return CTSSpec(appendants=tuple(cts_appendants), initial_tape=initial), symbol_index
 
 
+def build_cts_from_aligned(ats) -> tuple[CTSSpec, dict[str, int], int]:
+    """Cook §2.2 for 2-tag: 2k appendants (first k real, second k empty).
+
+    Halt symbols (those without a production in the tag system) get an
+    empty appendant in the CTS too; the CTS will keep consuming their
+    encoded bits without producing, and the CTS halts on empty tape.
+
+    When the 2-tag is aligned with use_offset = 1, prepend k N bits to the
+    CTS initial tape. The CTS cursor advances by k while reading those Ns
+    (no Ys, nothing fires), landing on the start of the empty half. The
+    first real tag symbol's encoding then fires an EMPTY appendant
+    (ignored), and the second tag symbol fires a real one (used). This
+    mirrors the 2-tag "use the second symbol of each pair" semantics.
+
+    Returns (cts_spec, symbol_index, prefix_n_count).
+    """
+    all_syms: set[str] = set(ats.productions.keys()) | set(ats.initial_tape)
+    for app in ats.productions.values():
+        all_syms.update(app)
+
+    ordered = sorted(all_syms)
+    k = len(ordered)
+    symbol_index = {s: i for i, s in enumerate(ordered)}
+
+    encoded_appendants: list[tuple[str, ...]] = []
+    for s in ordered:
+        prod = ats.productions.get(s, ())
+        encoded = encode_string(prod, symbol_index, k)
+        encoded_appendants.append(encoded)
+
+    all_appendants: list[tuple[str, ...]] = list(encoded_appendants) + [() for _ in range(k)]
+
+    initial = list(encode_string(ats.initial_tape, symbol_index, k))
+    if ats.initial_use_offset == 1:
+        initial = ["N"] * k + initial
+
+    return (
+        CTSSpec(appendants=tuple(all_appendants), initial_tape=tuple(initial)),
+        symbol_index,
+        k * ats.initial_use_offset,
+    )
+
+
 def decode_tape(cts_tape: tuple[str, ...], symbol_index: dict[str, int]) -> tuple[str, ...]:
     k = len(symbol_index)
     inv = {i: s for s, i in symbol_index.items()}

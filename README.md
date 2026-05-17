@@ -21,7 +21,8 @@ BF source --> TM --> CTS --> Rule 110 initial bitstring --> evolution --> decode
 | 2 | Cook gliders A, B, C, D, Ebar | verified |
 | 2 | Cook glider E | not yet found (same velocity as Ebar — see `docs/gliders_status.md`) |
 | 5 | aligned tag system + tm→tag-system (Cook §2.1) | verified for all-zero initial tape |
-| 5 | tag→cts with alignment (Cook §2.2) | pending |
+| 5 | aligned tag → CTS with alignment prefix (Cook §2.2) | verified |
+| 5 | end-to-end BF → TM → tag → CTS (single-increment program) | verified |
 | 3 | verified collisions | not-started |
 | 4 | `compiler/cts.py` pure simulator | verified |
 | 4 | `compiler/cts_to_r110.py` encoder | blocked on Phase 2/3 |
