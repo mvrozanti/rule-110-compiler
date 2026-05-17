@@ -10,11 +10,11 @@ check passes against `core/rule110.py` and is asserted in
 | Glider | (period_t, displacement) | Status                  | Notes |
 |--------|--------------------------|-------------------------|-------|
 | A      | (3, +2)                  | verified                | delta = `0.11` at left_phase 3 |
-| B      | (4, -2)                  | candidate fails in isolation | 3-cell candidate from random-IC scan does not propagate |
-| C1/2/3 | (7, 0)                   | candidate fails         | stationary, multiple variants |
-| D1/2   | (10, +2)                 | candidate fails         |       |
-| E      | (15, -4)                 | candidate fails         |       |
-| Ebar   | (30, -8)                 | candidate fails         |       |
+| C      | (7, 0)                   | verified                | 6-cell delta at left_phase 8, span 14 |
+| Ebar   | (30, -8)                 | verified                | 13-cell delta at left_phase 6, span 22 |
+| B      | (4, -2)                  | not yet isolated        | scripts/isolate_gliders.py at 120 seeds still misses |
+| D1/2   | (10, +2)                 | not yet isolated        |       |
+| E      | (15, -4)                 | not yet isolated        |       |
 | F      | (36, -4)                 | not searched            |       |
 | Gn     | (42, -14)                | not searched            |       |
 | H      | (92, -18)                | not searched            |       |

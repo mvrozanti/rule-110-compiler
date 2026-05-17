@@ -15,11 +15,11 @@ period_t * n steps, the same delta must reappear at offset +n*displacement.
 
 Status (2026-05-17):
     A    verified
+    C    verified
+    Ebar verified
     B    candidate identified, fails isolation verification
-    C    candidate identified, fails isolation verification
     D    candidate identified, fails isolation verification
     E    candidate identified, fails isolation verification
-    Ebar candidate identified, fails isolation verification
 
 See docs/gliders_status.md for current candidates and known gaps. The
 discovery scripts are scripts/discover_gliders.py, scripts/observe_gliders.py,
@@ -51,4 +51,29 @@ A = Glider(
 )
 
 
-ALL_VERIFIED: tuple[Glider, ...] = (A,)
+C = Glider(
+    name="C",
+    period_t=7,
+    displacement=0,
+    left_phase=8,
+    delta=((0, 0), (4, 0), (8, 0), (10, 0), (12, 1), (13, 1)),
+    citation="Cook 2004 Fig 5 (C-class: (7, 0)); discovered via "
+             "scripts/isolate_gliders.py seed=51 t=700; verified in isolation.",
+)
+
+
+Ebar = Glider(
+    name="Ebar",
+    period_t=30,
+    displacement=-8,
+    left_phase=6,
+    delta=(
+        (0, 1), (2, 0), (3, 1), (4, 1), (5, 0), (7, 1),
+        (10, 0), (11, 0), (13, 1), (17, 1), (19, 0), (20, 0), (21, 1),
+    ),
+    citation="Cook 2004 Fig 5 (Ē: (30, -8)); discovered via "
+             "scripts/isolate_gliders.py seed=27 t=400; verified in isolation.",
+)
+
+
+ALL_VERIFIED: tuple[Glider, ...] = (A, C, Ebar)
