@@ -1,0 +1,93 @@
+"""Structural glider detection by period/displacement, not bit pattern.
+
+Rationale: Cook's collisions can change a glider's local left_phase
+(see ADR 0005). A glider that was at left_phase L before a crossing
+may emerge at left_phase L' ≠ L afterwards, with different specific
+bits at the same absolute position. Bit-pattern matching against a
+single canonical delta misses these. Detecting gliders by their
+*dynamical* invariants — period T and spatial displacement D — is
+robust to the phase shift.
+
+Two helpers:
+
+  - `is_stationary_glider`: a region is a stationary (D=0) glider of
+    period T iff cells in it at time t equal cells in it at time t+T,
+    and the cells differ from time-shifted ether in at least one
+    position (excluding pure ether, which is trivially period-T for
+    T dividing the ether temporal period of 7).
+
+  - `find_displaced_glider`: scan a state at time t for any contiguous
+    non-ether region whose pattern reappears in state_t_plus_T shifted
+    by `displacement` cells. Returns the leftmost anchor, or None.
+
+Both helpers operate on two pre-computed snapshots of the Rule 110
+state, so callers control the evolution and can verify multiple periods
+by repeating the check.
+"""
+
+from core.ether import SPATIAL_PERIOD, ether_cell
+
+
+def _differs_from_ether(state, anchor, extent, time_t):
+    """Return True if any cell in [anchor, anchor+extent) differs from
+    time-shifted ether."""
+    for j in range(extent):
+        pos = anchor + j
+        if not (0 <= pos < len(state)):
+            return False
+        if state[pos] != ether_cell(pos + 4 * time_t):
+            return True
+    return False
+
+
+def is_stationary_glider(state_t, state_t_plus_T, anchor, extent, time_t):
+    """True iff the window [anchor, anchor+extent) is non-ether at time t
+    AND identical at time t+T (i.e. stationary period T).
+
+    The caller is responsible for ensuring state_t_plus_T was reached by
+    exactly T evolutions from state_t.
+    """
+    if not _differs_from_ether(state_t, anchor, extent, time_t):
+        return False
+    for j in range(extent):
+        pos = anchor + j
+        if not (0 <= pos < len(state_t_plus_T)):
+            return False
+        if state_t[pos] != state_t_plus_T[pos]:
+            return False
+    return True
+
+
+def find_displaced_glider(state_t, state_t_plus_T, displacement,
+                          time_t, extent=8,
+                          search_left=None, search_right=None):
+    """Scan state_t for a window of length `extent` whose contents reappear
+    in state_t_plus_T shifted by `displacement` cells, where the window
+    is non-ether at time t.
+
+    Returns the leftmost anchor satisfying these conditions, or None.
+
+    Search bounds default to the full state (less a safety margin for the
+    displacement). For a leftward-moving glider (displacement < 0), the
+    target position `anchor + displacement` must still be in bounds.
+    """
+    n = len(state_t)
+    if search_left is None:
+        search_left = max(0, -displacement)
+    if search_right is None:
+        search_right = n - max(0, displacement) - extent
+
+    for anchor in range(search_left, search_right):
+        if not _differs_from_ether(state_t, anchor, extent, time_t):
+            continue
+        target = anchor + displacement
+        if target < 0 or target + extent > n:
+            continue
+        match = True
+        for j in range(extent):
+            if state_t[anchor + j] != state_t_plus_T[target + j]:
+                match = False
+                break
+        if match:
+            return anchor
+    return None

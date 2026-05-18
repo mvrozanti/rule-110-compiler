@@ -19,6 +19,16 @@ PHASES = [
      ["pytest", "tests/test_gliders.py", "-q"]),
     ("Phase 3: empirical collision fixtures (C x Ebar crossing, parallels)",
      ["pytest", "tests/test_collisions.py", "-q"]),
+    ("Phase 3: structural glider detectors",
+     ["pytest", "tests/test_glider_detect.py", "-q"]),
+    ("Phase 3: Cook s3.2.4 C2 x Ebar crossing collision (verified)",
+     ["pytest", "tests/test_cook_crossing.py", "-q"]),
+    ("Phase 2: Cook-faithful A/C2/Ebar variants",
+     ["pytest", "tests/test_cook_gliders.py", "-q"]),
+    ("Phase 3: alpha/beta calibration",
+     ["pytest", "tests/test_alpha_beta.py", "-q"]),
+    ("Phase 3: collision residue characterisation",
+     ["pytest", "tests/test_collision_residue.py", "-q"]),
     ("Phase 4: Pure CTS simulator",
      ["pytest", "tests/test_cts.py", "-q"]),
     ("Phase 4: CTS -> R110 state encoding round-trip",
@@ -48,11 +58,11 @@ NOT_YET = [
     "Constrained width-19 popcount sweeps and long random-IC sweeps "
     "(scripts/exhaustive_e_search_constrained.py, scripts/long_random_e.py) "
     "are the next escalations.",
-    "Phase 3: full Cook collision atlas -- four collisions verified as test "
-    "fixtures (C x Ebar crossing, A-A/C-C/Ebar-Ebar parallels). The 30+ "
-    "collisions Cook documents in s3.3-s3.5 (leaders firing, components "
-    "accepted/rejected, ossifiers producing tape data) are still empirical "
-    "open work.",
+    "Phase 3: full Cook collision atlas -- Cook s3.2.4 C2 x Ebar crossing "
+    "now empirically verified (tests/test_cook_crossing.py, 8 tests). "
+    "Remaining: A4 x Ebar ossification, leader x tape-Y / tape-N, primary "
+    "component accept/reject, rejector x component, acceptor x component. "
+    "All tractable with the structural detectors in compiler/glider_detect.py.",
     "Phase 4: cts_to_r110.py executing CTS *steps* in R110 -- the encoder "
     "round-trips CTS state through R110, but appendant dynamics (Y "
     "consumes appendant + appends; N skips) still execute in Python. "
