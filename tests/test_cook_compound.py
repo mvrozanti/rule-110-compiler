@@ -100,3 +100,69 @@ def test_a_glider_product_persists_over_five_periods():
         assert observed == window, (
             f"A glider pattern shifted at period {k}: expected {window}, got {observed}"
         )
+
+
+def test_eight_ebar_leader_through_4c2_character_emits_a_cluster():
+    """Cook §3.5: an 8-Ebar leader hits a 4-C2 character. Cook claims
+    the leader emits an acceptor (3 packed As) or rejector pulse to
+    the right of the character (depending on Y/N spacings).
+
+    We verify the structurally observable half: the 4 C2 tape symbols
+    survive the leader pass, AND multiple period-(3,+2) A-class glider
+    positions appear on the right of the leader-character interaction
+    — consistent with the packed-A 'acceptor' or 'rejector' that Cook's
+    construction produces.
+
+    Counting the exact number of As (and distinguishing acceptor from
+    rejector by their internal spacings) requires sharper compound-
+    glider detection than `find_displaced_glider` provides; the test
+    here only asserts ≥3 distinct A-class positions emerge.
+    """
+    width = SPATIAL_PERIOD * 1200
+    post = 4000
+    state = fresh_ether_state(width, phase=0)
+    tape_start = width // 6
+    c2_anchors = []
+    cw = 0
+    target = tape_start
+    for _ in range(4):
+        a, cw = place_cook_glider(state, target, C2, cumulative_width=cw)
+        c2_anchors.append(a)
+        target = a + C2_SEP
+    target = c2_anchors[-1] + C2.extent + EBAR_GAP
+    eb_anchors = []
+    for _ in range(8):
+        a, cw = place_cook_glider(state, target, Ebar, cumulative_width=cw)
+        eb_anchors.append(a)
+        target = a + 42  # min stable Ebar×Ebar
+
+    s_t = evolve_numpy(state, post)
+    s_a = evolve_numpy(s_t, A.period_t)
+    s_c2 = evolve_numpy(s_t, C2.period_t)
+
+    c2_surv = sum(
+        1 for ca in c2_anchors
+        if is_stationary_glider(s_t, s_c2, ca, C2.extent, post)
+    )
+    assert c2_surv == 4, f"only {c2_surv}/4 C2s survived the leader pass"
+
+    safe_lo = eb_anchors[-1] + Ebar.extent + 50
+    safe_hi = width - post - 50
+    distinct_as = []
+    cursor = safe_lo
+    last_a = -1000
+    while cursor < safe_hi and len(distinct_as) < 20:
+        a_at = find_displaced_glider(
+            s_t, s_a, displacement=A.displacement, time_t=post,
+            extent=A.extent, search_left=cursor, search_right=safe_hi,
+        )
+        if a_at is None:
+            break
+        if a_at - last_a >= 14:
+            distinct_as.append(a_at)
+            last_a = a_at
+        cursor = a_at + 7
+    assert len(distinct_as) >= 3, (
+        f"expected ≥3 distinct A-class positions emitted by leader-character "
+        f"collision, got {len(distinct_as)}: {distinct_as}"
+    )
