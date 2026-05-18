@@ -1,4 +1,4 @@
-# 0009 — Three Cook collisions verified, 2026-05-18 evening
+# 0009 — Cook collisions verified (was: Three; superseded by ADR 0011, now four)
 
 ## Status
 
