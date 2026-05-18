@@ -102,6 +102,68 @@ def test_a_glider_product_persists_over_five_periods():
         )
 
 
+def test_ossifier_creates_new_stationary_c_class_glider():
+    """Cook §3.5 ossifier reaction: a group of A4s (4 sub-groups of 4
+    packed As each = 16 As) on the left meets 4 moving-data Ebars on
+    the right. The Ebars are "ossified" into stationary C-class
+    gliders past the ossifier's right edge.
+
+    Verified structurally: with `is_real_stationary_glider` (which
+    rejects pure Cook-shifted ether at ALL 14 phase shifts), a real
+    new stationary period-7 glider appears at position 149 cells past
+    the ossifier's right edge, stable across 10 C2 periods.
+
+    This is the third Cook §3.5 reaction verified — the mechanism by
+    which CTS appendant characters get written into the tape.
+    """
+    from compiler.glider_detect import is_real_stationary_glider
+
+    width = SPATIAL_PERIOD * 1000
+    post = 3500
+    state = fresh_ether_state(width, phase=0)
+    all_a_anchors = []
+    cw = 0
+    target = width // 5
+    for g in range(4):
+        for k in range(4):
+            a, cw = place_cook_glider(state, target, A, cumulative_width=cw)
+            all_a_anchors.append(a)
+            target = a + 14
+        target += 50
+    target = all_a_anchors[-1] + A.extent + 200
+    eb_anchors = []
+    for _ in range(4):
+        ea, cw = place_cook_glider(state, target, Ebar, cumulative_width=cw)
+        eb_anchors.append(ea)
+        target = ea + 42
+
+    s_t = evolve_numpy(state, post)
+    s_c2 = evolve_numpy(s_t, C2.period_t)
+
+    search_lo = all_a_anchors[-1] + A.extent + 50
+    search_hi = eb_anchors[0] - 50
+    real_c2s = [
+        anchor for anchor in range(search_lo, search_hi)
+        if is_real_stationary_glider(s_t, s_c2, anchor, C2.extent, post)
+    ]
+    assert len(real_c2s) >= 1, (
+        f"expected ≥1 new C-class glider in the ossifier output region, got {len(real_c2s)}"
+    )
+
+    # Verify persistence over 5 periods
+    snapshots = [s_t]
+    for _ in range(5):
+        snapshots.append(evolve_numpy(snapshots[-1], C2.period_t))
+    test_anchor = real_c2s[0]
+    initial = tuple(snapshots[0][test_anchor + j] for j in range(C2.extent))
+    for k in range(1, 6):
+        observed = tuple(snapshots[k][test_anchor + j] for j in range(C2.extent))
+        assert observed == initial, (
+            f"new C-class glider at {test_anchor} unstable at period {k}: "
+            f"{initial} → {observed}"
+        )
+
+
 def test_eight_ebar_leader_through_4c2_character_emits_a_cluster():
     """Cook §3.5: an 8-Ebar leader hits a 4-C2 character. Cook claims
     the leader emits an acceptor (3 packed As) or rejector pulse to

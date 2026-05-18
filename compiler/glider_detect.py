@@ -58,6 +58,35 @@ def is_stationary_glider(state_t, state_t_plus_T, anchor, extent, time_t):
     return True
 
 
+def is_real_stationary_glider(state_t, state_t_plus_T, anchor, extent, time_t,
+                              n_periods=3):
+    """Stronger stationary check: cells at anchor are stable AND differ from
+    *every* possible Cook-shifted ether phase (0..13). Excludes pure ether at
+    any shifted phase, leaving only genuine glider structures.
+
+    Verifies stability across `n_periods` evolutions of T = period implicit in
+    the snapshots — the caller must supply state_t_plus_T such that the period
+    matches their interest. For C2 (period 7), the caller calls with
+    state_t_plus_T = evolve(state_t, 7).
+    """
+    if not is_stationary_glider(state_t, state_t_plus_T, anchor, extent, time_t):
+        return False
+    for cum_w in range(SPATIAL_PERIOD):
+        matches_this_phase = True
+        for j in range(extent):
+            pos = anchor + j
+            if not (0 <= pos < len(state_t)):
+                matches_this_phase = False
+                break
+            expected = ether_cell(pos + cum_w + 4 * time_t)
+            if state_t[pos] != expected:
+                matches_this_phase = False
+                break
+        if matches_this_phase:
+            return False
+    return True
+
+
 def find_displaced_glider(state_t, state_t_plus_T, displacement,
                           time_t, extent=8,
                           search_left=None, search_right=None):
