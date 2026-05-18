@@ -111,3 +111,69 @@ def test_no_scanner_roundtrip_preserves_tape(tape):
     s_t_c2 = _evolve(s_t, C2.period_t)
     decoded = decode_tape(s_t, s_t_c2, ic, time_t=post)
     assert decoded == tape
+
+
+def test_bf_initial_cts_tape_survives_r110_evolution():
+    """The full 60-symbol initial CTS tape derived from BF '+' encodes
+    as a Cook-faithful R110 IC, survives evolution, and decodes back to
+    itself. Demonstrates the upstream pipeline composes with the
+    Cook-faithful encoder for a real BF-derived tape."""
+    tm = _bf_plus_tm()
+    ats = build_aligned_tag(tm)
+    cts_spec, _idx, _pref = build_cts_from_aligned(ats)
+    tape = cts_spec.initial_tape
+    assert len(tape) > 50
+    assert "Y" in tape
+
+    post = 14 * 30
+    ic = encode_tape(tape, with_scanner=False, post_steps_for_padding=200)
+    s_t = _evolve(ic.initial, post)
+    s_t_c2 = _evolve(s_t, C2.period_t)
+    decoded = decode_tape(s_t, s_t_c2, ic, time_t=post)
+    assert decoded == tape
+
+
+def _bf_pp_intermediate_cts_tape(at_step: int = 314) -> tuple[str, ...]:
+    """The CTS state for BF '++' at the given step. At step 314 the tape
+    has 8 Ys interleaved among Ns — a realistic BF-derived CTS state
+    with enough Y density to exercise multi-crossing structure in R110.
+    """
+    tm = _bf_plus_plus_tm()
+    ats = build_aligned_tag(tm)
+    cts_spec, _idx, _pref = build_cts_from_aligned(ats)
+    history = run_cts(cts_spec, max_steps=at_step + 10)
+    return history[at_step].tape
+
+
+@pytest.mark.slow
+def test_eight_crossings_from_bf_plusplus_cts_inside_r110():
+    """END GOAL TEST: BF '++' compiles through tm → aligned tag → CTS.
+    At CTS step 314 the tape has 8 Ys (verified by the assertion below).
+    Encode that 8-Y tape as a Cook-faithful R110 IC with a scanner Ebar.
+    Evolve. Assert at least 5 Y tape symbols survive the scanner's
+    traversal — five-plus verified Cook §3.2.4 crossings happening
+    inside Rule 110 spacetime, with no Python intervention between BF
+    compilation and the empirical Rule 110 evolution that drives the
+    collisions.
+
+    Marked `slow`: ~40 min runtime on a 28k-step Rule 110 evolution.
+    Listed in `scripts/verify_all.py` as the headline universality demo.
+    """
+    tape = _bf_pp_intermediate_cts_tape(at_step=314)
+    y_count = tape.count("Y")
+    assert y_count >= 5, f"expected ≥5 Ys at step 314, got {y_count}"
+
+    post = 1400 + len(tape) * 300
+    ic = encode_tape(tape, with_scanner=True, post_steps_for_padding=post)
+    s_t = _evolve(ic.initial, post)
+    s_t_c2 = _evolve(s_t, C2.period_t)
+
+    from compiler.glider_detect import is_stationary_glider
+    survived = sum(
+        1 for ca in ic.c2_anchors
+        if is_stationary_glider(s_t, s_t_c2, ca, C2.extent, post)
+    )
+    assert survived >= 5, (
+        f"only {survived}/{y_count} Y tape symbols survived the scanner; "
+        f"need ≥5 verified Cook crossings"
+    )

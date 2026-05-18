@@ -17,3 +17,7 @@ include = ["core*", "compiler*", "runtime*", "scripts*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "slow: end-to-end demos that run for many minutes; excluded from default pytest run, included by verify_all",
+]
+addopts = "-m 'not slow'"
