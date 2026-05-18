@@ -23,6 +23,8 @@ PHASES = [
      ["pytest", "tests/test_glider_detect.py", "-q"]),
     ("Phase 3: Cook s3.2.4 C2 x Ebar crossing collision (verified)",
      ["pytest", "tests/test_cook_crossing.py", "-q"]),
+    ("Phase 3: multi-C2 tape traversal (Ebar crosses N tape symbols)",
+     ["pytest", "tests/test_multi_c2_traversal.py", "-q"]),
     ("Phase 2: Cook-faithful A/C2/Ebar variants",
      ["pytest", "tests/test_cook_gliders.py", "-q"]),
     ("Phase 3: alpha/beta calibration",

@@ -13,7 +13,7 @@ BF source --> TM --> tag system --> CTS --> Rule 110 IC --> evolution --> output
 
 ## Status
 
-136 tests pass (1 xfailed). Each row of the table flips to `verified` only
+141 tests pass (1 xfailed). Each row of the table flips to `verified` only
 when a green test proves it. `not yet` means the path forward is clear but
 the code/proof is empirically pending.
 
@@ -26,6 +26,7 @@ the code/proof is empirically pending.
 | 2 | Cook-faithful A (width 6), C2 (width 3), Ebar (width 7) | **verified** |
 | 3 | Cook §3.2.4 C2 × Ebar **crossing collision** (with phase shift) | **verified** |
 | 3 | Structural glider detectors (period/displacement-based) | **verified** |
+| 3 | **Multi-C2 tape traversal** (Ebar crosses 10 C2s in sequence) | **verified** |
 | 3 | `scripts/collide.py` sandbox | shipped |
 | 3 | empirical collision fixtures (C x Ē crossing, parallels) | **verified** |
 | 3 | α/β calibration (C×C min 28, Ē×Ē min 42, placement quantum 14) | **verified** |
