@@ -13,7 +13,7 @@ BF source --> TM --> tag system --> CTS --> Rule 110 IC --> evolution --> output
 
 ## Status
 
-159 tests pass (1 xfailed). Each row of the table flips to `verified` only
+162 tests pass (1 xfailed). Each row of the table flips to `verified` only
 when a green test proves it. `not yet` means the path forward is clear but
 the code/proof is empirically pending.
 
@@ -30,6 +30,7 @@ the code/proof is empirically pending.
 | 4 | **Cook-faithful CTS tape encoding + 5-step scanner pass inside R110** | **verified** |
 | 7 | **BF → ... → Cook CTS tape → R110 → evolve → decode round-trip** | **verified** |
 | 7 | **BF '++' yields 8 verified Cook crossings inside R110** | **verified** |
+| 3 | **Cook §3.5 compound — 4-C2 character × Ebar → 4 C2s preserved + A emitted** | **verified** |
 | 3 | `scripts/collide.py` sandbox | shipped |
 | 3 | empirical collision fixtures (C x Ē crossing, parallels) | **verified** |
 | 3 | α/β calibration (C×C min 28, Ē×Ē min 42, placement quantum 14) | **verified** |

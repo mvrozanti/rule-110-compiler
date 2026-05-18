@@ -29,6 +29,8 @@ PHASES = [
      ["pytest", "tests/test_cook_tape.py", "-q"]),
     ("Phase 7: BF -> Cook CTS tape -> R110 IC -> evolve -> 8 cook crossings",
      ["pytest", "tests/test_bf_end_to_end_cook.py", "-q"]),
+    ("Phase 3: Cook s3.5 compound — 4-C2 character x Ebar emits an A",
+     ["pytest", "tests/test_cook_compound.py", "-q"]),
     ("Phase 2: Cook-faithful A/C2/Ebar variants",
      ["pytest", "tests/test_cook_gliders.py", "-q"]),
     ("Phase 3: alpha/beta calibration",
