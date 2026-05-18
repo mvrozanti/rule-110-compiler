@@ -27,6 +27,8 @@ PHASES = [
      ["pytest", "tests/test_multi_c2_traversal.py", "-q"]),
     ("Phase 4: Cook-faithful CTS tape encoding + 5-symbol scanner pass",
      ["pytest", "tests/test_cook_tape.py", "-q"]),
+    ("Phase 7: BF -> Cook CTS tape -> R110 IC -> evolve -> decode round-trip",
+     ["pytest", "tests/test_bf_end_to_end_cook.py", "-q"]),
     ("Phase 2: Cook-faithful A/C2/Ebar variants",
      ["pytest", "tests/test_cook_gliders.py", "-q"]),
     ("Phase 3: alpha/beta calibration",
