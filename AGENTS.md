@@ -26,6 +26,12 @@ stopping at intermediate milestones with the goal unmet.
    still tractable while waiting for redirection. Don't pre-emptively
    scope-down silently.
 
+3. **Sub-goal progress counts.** When the end goal decomposes into
+   verifiable sub-steps, each new sub-step verified is genuine
+   progress and should be committed and announced. Don't withhold
+   sub-step commits waiting for the full end-goal to be complete; the
+   user wants to see progress materialise.
+
 ## Mission
 
 Compile Brainfuck programs down to Rule 110 initial conditions per Matthew
