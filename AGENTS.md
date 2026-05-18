@@ -2,6 +2,30 @@
 
 Conventions for contributors (human or AI) to `rule-110-compiler`.
 
+## Non-negotiables
+
+These rules supersede all other instructions in this file and elsewhere. They
+exist because the project has been restarted multiple times by agents
+stopping at intermediate milestones with the goal unmet.
+
+1. **Do not stop until the goal is reached.** When the user has set a
+   goal — explicit or implicit — keep working until it is verifiably
+   achieved or until the user explicitly redirects. Intermediate
+   "progress" is not a stopping condition. Running out of obvious next
+   moves is not a stopping condition; finding non-obvious ones is part
+   of the job. Reaching a natural-feeling end-of-session is not a
+   stopping condition. The only stopping conditions are: (a) the goal
+   is met and verifiable, (b) the user redirects, or (c) a destructive
+   action would be required that needs explicit confirmation (per the
+   global Claude Code rules). A long session is not a violation. A
+   "good place to pause" is not a stopping condition.
+
+2. **Be honest about scope.** If after substantial effort the goal
+   appears unreachable in the current direction, surface the obstacle
+   explicitly to the user — but keep working on the parts that are
+   still tractable while waiting for redirection. Don't pre-emptively
+   scope-down silently.
+
 ## Mission
 
 Compile Brainfuck programs down to Rule 110 initial conditions per Matthew
