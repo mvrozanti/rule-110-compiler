@@ -50,27 +50,65 @@ function bfParse(src) {
   return ops;
 }
 
-const CELL_MAX_BF = 7;
+const BYTE_WRAP = 256;
 
-function bfTrace(src, maxSteps = 4000) {
+function parseStdin(text) {
+  // Accept ASCII plus \xNN hex escapes and \n / \r / \t / \0.
+  if (!text) return [];
+  const out = [];
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === "\\" && i + 1 < text.length) {
+      const c = text[i + 1];
+      if (c === "n") { out.push(10); i++; continue; }
+      if (c === "r") { out.push(13); i++; continue; }
+      if (c === "t") { out.push(9); i++; continue; }
+      if (c === "0") { out.push(0); i++; continue; }
+      if (c === "\\") { out.push(92); i++; continue; }
+      if (c === "x" && i + 3 < text.length) {
+        const hex = text.slice(i + 2, i + 4);
+        if (/^[0-9a-fA-F]{2}$/.test(hex)) { out.push(parseInt(hex, 16)); i += 3; continue; }
+      }
+    }
+    out.push(text.charCodeAt(i) & 0xff);
+  }
+  return out;
+}
+
+function bytesToDisplay(bytes) {
+  // ASCII printables literal; control bytes as \xNN.
+  let s = "";
+  for (const b of bytes) {
+    if (b === 10) s += "\\n";
+    else if (b === 13) s += "\\r";
+    else if (b === 9) s += "\\t";
+    else if (b === 0) s += "\\0";
+    else if (b >= 32 && b < 127) s += String.fromCharCode(b);
+    else s += "\\x" + b.toString(16).padStart(2, "0");
+  }
+  return s;
+}
+
+function bfTrace(src, stdin = [], maxSteps = 20000, tapeSize = 256) {
   const ops = bfParse(src);
-  const tape = new Array(64).fill(0);
+  const tape = new Array(tapeSize).fill(0);
   let dp = 0;
   let pc = 0;
-  const history = [{ pc, dp, tape: tape.slice() }];
+  let inPos = 0;
+  let output = [];
+  const history = [{ pc, dp, tape: tape.slice(), output: output.slice() }];
   for (let s = 0; s < maxSteps && pc < ops.length; s++) {
     const { op, match } = ops[pc];
     switch (op) {
-      case "+": tape[dp] = (tape[dp] + 1) % (CELL_MAX_BF + 1); pc++; break;
-      case "-": tape[dp] = (tape[dp] - 1 + CELL_MAX_BF + 1) % (CELL_MAX_BF + 1); pc++; break;
+      case "+": tape[dp] = (tape[dp] + 1) % BYTE_WRAP; pc++; break;
+      case "-": tape[dp] = (tape[dp] - 1 + BYTE_WRAP) % BYTE_WRAP; pc++; break;
       case ">": dp = Math.min(tape.length - 1, dp + 1); pc++; break;
       case "<": dp = Math.max(0, dp - 1); pc++; break;
       case "[": if (tape[dp] === 0) pc = match + 1; else pc++; break;
       case "]": if (tape[dp] !== 0) pc = match + 1; else pc++; break;
-      case ".": pc++; break;
-      case ",": pc++; break;
+      case ".": output.push(tape[dp]); pc++; break;
+      case ",": tape[dp] = inPos < stdin.length ? (stdin[inPos++] & 0xff) : 0; pc++; break;
     }
-    history.push({ pc, dp, tape: tape.slice() });
+    history.push({ pc, dp, tape: tape.slice(), output: output.slice() });
   }
   return { ops, history };
 }
@@ -212,29 +250,46 @@ function drawBF(canvas, src, trace, t) {
   }
 
   const tapeY = 8 + Math.ceil(src.length / perLine) * charH + 14;
-  const cellW = Math.max(10, Math.min(20, Math.floor((w - 16) / 32)));
+  const cellW = Math.max(10, Math.min(22, Math.floor((w - 16) / 32)));
   ctx.font = "10px ui-monospace, monospace";
   ctx.fillStyle = "#888";
-  ctx.fillText("tape:", 8, tapeY - 12);
+  ctx.textBaseline = "alphabetic";
+  ctx.textAlign = "start";
+  ctx.fillText("tape (cells 0..31):", 8, tapeY - 12);
   for (let c = 0; c < 32; c++) {
     const v = step.tape[c] || 0;
     const x = 8 + c * cellW;
-    ctx.fillStyle = v === 0 ? "#1a1a1a" : `rgba(125,221,255,${0.25 + 0.1 * v})`;
+    const alpha = v === 0 ? 0 : 0.25 + 0.7 * Math.min(1, v / 64);
+    ctx.fillStyle = v === 0 ? "#1a1a1a" : `rgba(125,221,255,${alpha})`;
     ctx.fillRect(x, tapeY, cellW - 1, cellW - 1);
     if (c === step.dp) {
       ctx.strokeStyle = ACCENT;
       ctx.lineWidth = 2;
       ctx.strokeRect(x, tapeY, cellW - 1, cellW - 1);
     }
-    if (v > 0) {
+    if (v > 0 && cellW >= 14) {
       ctx.fillStyle = "#fff";
-      ctx.font = "9px ui-monospace, monospace";
+      ctx.font = v >= 100 ? "8px ui-monospace, monospace" : "9px ui-monospace, monospace";
       ctx.textBaseline = "middle";
       ctx.textAlign = "center";
       ctx.fillText(String(v), x + (cellW - 1) / 2, tapeY + (cellW - 1) / 2);
       ctx.textAlign = "start";
       ctx.textBaseline = "alphabetic";
     }
+  }
+
+  // Captured stdout below the tape strip.
+  const outY = tapeY + cellW + 14;
+  if (outY < h - 10) {
+    ctx.fillStyle = "#888";
+    ctx.font = "10px ui-monospace, monospace";
+    ctx.fillText("stdout:", 8, outY);
+    const display = bytesToDisplay(step.output || []);
+    ctx.fillStyle = display ? "#9fe" : "#444";
+    ctx.font = "12px ui-monospace, monospace";
+    const maxChars = Math.floor((w - 70) / 7.4);
+    const shown = display.length > maxChars ? display.slice(-maxChars) : display;
+    ctx.fillText(shown || "(none yet)", 60, outY);
   }
 }
 
@@ -393,6 +448,7 @@ function drawR110(canvas, hist, t, placements, useEther, collisions) {
 
 const state = {
   bfSrc: "+++[->+<]",
+  bfStdin: "",
   ctsText: "appendants: YN, N\ntape: YY",
   r110IC: "A@30, Ebar@140",
   t: 0,
@@ -413,8 +469,9 @@ const R110_WIDTH = 220;
 const R110_STEPS = 260;
 
 function recompute() {
-  try { bfCache = bfTrace(state.bfSrc, 4000); }
-  catch (e) { bfCache = { ops: [], history: [{ pc: 0, dp: 0, tape: new Array(64).fill(0) }] }; }
+  const stdinBytes = parseStdin(state.bfStdin);
+  try { bfCache = bfTrace(state.bfSrc, stdinBytes, 20000, 256); }
+  catch (e) { bfCache = { ops: [], history: [{ pc: 0, dp: 0, tape: new Array(256).fill(0), output: [] }] }; }
 
   try {
     const tm = compileBF(state.bfSrc);
@@ -487,14 +544,27 @@ function render() {
 }
 
 const DEMOS = {
-  hello: { bf: "+++[->+<]", cts: "appendants: YN, N\ntape: YY", r110: "A@30, Ebar@140" },
-  move:  { bf: "+++++[->+<]", cts: "appendants: YN, N\ntape: YYY", r110: "C@30, A@80, Ebar@180" },
-  add:   { bf: "++>++[<+>-]", cts: "appendants: YN, N\ntape: YYN", r110: "A@40, A@80, Ebar@150" },
-  cts_id:  { bf: "+", cts: "appendants: Y\ntape: YYYY", r110: "B@40, C@120, D@180" },
-  cts_dup: { bf: "+", cts: "appendants: YY, _\ntape: Y", r110: "A@30, B@80, C@140, Ebar@200" },
-  r110_chaos:   { bf: "+", cts: "appendants: YN, N\ntape: YY", r110: "00100110100110011001011100110010100110011001011100110010011" },
-  r110_gliders: { bf: "+", cts: "appendants: YN, N\ntape: YY", r110: "A@20, B@60, C@100, D@140, Ebar@200" },
-  r110_collision: { bf: "+", cts: "appendants: YN, N\ntape: YY", r110: "C@40, Ebar@170" },
+  hello:    { bf: "+++[->+<]", stdin: "", cts: "appendants: YN, N\ntape: YY", r110: "A@30, Ebar@140" },
+  move:     { bf: "+++++[->+<]", stdin: "", cts: "appendants: YN, N\ntape: YYY", r110: "C@30, A@80, Ebar@180" },
+  add:      { bf: "++>++[<+>-]", stdin: "", cts: "appendants: YN, N\ntape: YYN", r110: "A@40, A@80, Ebar@150" },
+  cts_id:   { bf: "+", stdin: "", cts: "appendants: Y\ntape: YYYY", r110: "B@40, C@120, D@180" },
+  cts_dup:  { bf: "+", stdin: "", cts: "appendants: YY, _\ntape: Y", r110: "A@30, B@80, C@140, Ebar@200" },
+  helloworld: {
+    bf: "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.",
+    stdin: "",
+    cts: "appendants: YN, N\ntape: YY",
+    r110: "A@30, Ebar@140",
+  },
+  cat:      { bf: ",[.,]", stdin: "rule110!", cts: "appendants: YN, N\ntape: YY", r110: "A@30, Ebar@140" },
+  fib:      {
+    bf: ",>+>+<<[->>[->+>+<<]<[->>+<<]>>[-<+>]>[-<<<+>>>]<<<<]>>.",
+    stdin: "\\x09",
+    cts: "appendants: YN, N\ntape: YY",
+    r110: "A@30, Ebar@140",
+  },
+  r110_chaos:     { bf: "+", stdin: "", cts: "appendants: YN, N\ntape: YY", r110: "00100110100110011001011100110010100110011001011100110010011" },
+  r110_gliders:   { bf: "+", stdin: "", cts: "appendants: YN, N\ntape: YY", r110: "A@20, B@60, C@100, D@140, Ebar@200" },
+  r110_collision: { bf: "+", stdin: "", cts: "appendants: YN, N\ntape: YY", r110: "C@40, Ebar@170" },
 };
 
 let playTimer = null;
@@ -516,10 +586,12 @@ function loadDemo(name) {
   const d = DEMOS[name];
   if (!d) return;
   state.bfSrc = d.bf;
+  state.bfStdin = d.stdin ?? "";
   state.ctsText = d.cts;
   state.r110IC = d.r110;
   state.t = 0;
   document.getElementById("bfInput").value = state.bfSrc;
+  document.getElementById("bfStdinInput").value = state.bfStdin;
   document.getElementById("ctsInput").value = state.ctsText;
   document.getElementById("r110Input").value = state.r110IC;
   recompute();
@@ -528,10 +600,12 @@ function loadDemo(name) {
 
 function init() {
   document.getElementById("bfInput").value = state.bfSrc;
+  document.getElementById("bfStdinInput").value = state.bfStdin;
   document.getElementById("ctsInput").value = state.ctsText;
   document.getElementById("r110Input").value = state.r110IC;
 
   document.getElementById("bfInput").addEventListener("input", e => { state.bfSrc = e.target.value; state.t = 0; recompute(); render(); });
+  document.getElementById("bfStdinInput").addEventListener("input", e => { state.bfStdin = e.target.value; state.t = 0; recompute(); render(); });
   document.getElementById("ctsInput").addEventListener("input", e => { state.ctsText = e.target.value; state.t = 0; recompute(); render(); });
   document.getElementById("r110Input").addEventListener("input", e => { state.r110IC = e.target.value; state.t = 0; recompute(); render(); });
 

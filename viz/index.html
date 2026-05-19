@@ -72,14 +72,23 @@
     <label>demo:</label>
     <select id="demoSelect">
       <option value="">(pick…)</option>
-      <option value="hello">arithmetic + clear loop</option>
-      <option value="move">copy cell 0 → cell 1</option>
-      <option value="add">add 2 + 2</option>
-      <option value="cts_id">cts identity</option>
-      <option value="cts_dup">cts duplicator</option>
-      <option value="r110_chaos">r110 chaotic IC</option>
-      <option value="r110_gliders">r110 glider showcase</option>
-      <option value="r110_collision">r110 C × Ē crossing</option>
+      <optgroup label="bf">
+        <option value="hello">arithmetic + clear loop</option>
+        <option value="move">copy cell 0 → cell 1</option>
+        <option value="add">add 2 + 2</option>
+        <option value="helloworld">Hello World (cristofani-style)</option>
+        <option value="cat">cat (stdin: rule110!)</option>
+        <option value="fib">fibonacci (stdin: \x09 → F(11)=89)</option>
+      </optgroup>
+      <optgroup label="cts">
+        <option value="cts_id">cts identity</option>
+        <option value="cts_dup">cts duplicator</option>
+      </optgroup>
+      <optgroup label="r110">
+        <option value="r110_chaos">r110 chaotic IC</option>
+        <option value="r110_gliders">r110 glider showcase</option>
+        <option value="r110_collision">r110 C × Ē crossing</option>
+      </optgroup>
     </select>
     <button id="playBtn">▶ play</button>
     <button id="stepBackBtn">◀ step</button>
@@ -106,7 +115,8 @@
       </div>
       <div class="pane-input">
         <input id="bfInput" type="text" placeholder="e.g. +++[->+<]">
-        <div class="hint">brainfuck program. cell width 8 (mod 8 wrap). 64-cell tape.</div>
+        <input id="bfStdinInput" type="text" placeholder="stdin (raw chars or \xNN, \n, \0, \t)" style="margin-top:4px">
+        <div class="hint">standard 8-bit BF (byte cells, 256-wrap), 256-cell tape. <code>,</code> reads stdin; EOF → 0. <code>.</code> appends to stdout shown below.</div>
       </div>
       <div class="pane-body"><canvas id="bfCanvas"></canvas></div>
       <div class="pane-foot">
