@@ -13,7 +13,7 @@ BF source --> TM --> tag system --> CTS --> Rule 110 IC --> evolution --> output
 
 ## Status
 
-173 tests pass (1 xfailed). Each row of the table flips to `verified` only
+184 tests pass (1 xfailed). Each row of the table flips to `verified` only
 when a green test proves it. `not yet` means the path forward is clear but
 the code/proof is empirically pending.
 
@@ -24,12 +24,12 @@ the code/proof is empirically pending.
 | 2 | Cook gliders A, B, C, D, Ebar (5 of 6, width 0 variants) | verified |
 | 2 | Cook glider E | not yet found (see `docs/gliders_status.md`) |
 | 2 | Cook-faithful A (width 6), C2 (width 3), Ebar (width 7) | **verified** |
-| 3 | Cook §3.2.4 C2 × Ebar **crossing collision** (with phase shift) | **REVISED — see ADR 0012**: weak-detector positive; strict detection finds 0 real C2 survival. C2 destroyed in collision. |
+| 3 | Cook §3.2.4 C2 × Ebar **crossing** at gaps 36..49 (strict-real) | **verified (strict)** — 14 gap values, see test_cook_crossing |
 | 3 | Structural glider detectors (period/displacement-based) | **verified** |
 | 3 | **Multi-C2 tape traversal** (Ebar crosses 10 C2s in sequence) | **verified** |
 | 4 | **Cook-faithful CTS tape encoding + 5-step scanner pass inside R110** | **verified** |
 | 7 | **BF → ... → Cook CTS tape → R110 → evolve → decode round-trip** | **verified** |
-| 7 | **BF '++' yields 8 verified Cook crossings inside R110** | **REVISED — see ADR 0012**: weak-detector positive; strict finds 0 real Y survivors. Tape symbols destroyed by scanner. |
+| 7 | **BF '++' yields 7 STRICT-REAL Cook crossings inside R110** (EBAR_GAP=40) | **verified (strict)** |
 | 3 | **Cook §3.5 4-C2 character × Ebar → A emitted right** (strict-detector verified) | **verified** |
 | 3 | **Cook §3.5 leader — 8-Ebar × 4-C2 Y character → ≥3 A-class positions** | **verified** |
 | 3 | **Cook §3.5 ossifier — 16 As + 4 Ebars → new stationary C-class glider** | **verified** |

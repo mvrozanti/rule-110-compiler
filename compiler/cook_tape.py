@@ -23,9 +23,9 @@ from core.ether import SPATIAL_PERIOD
 
 
 # Empirically calibrated by tests/test_alpha_beta.py and
-# tests/test_multi_c2_traversal.py:
+# tests/test_cook_crossing.py:
 C2_SEP = 28              # min stable C2 × C2 cell spacing
-EBAR_GAP = 22            # verified crossing-phase gap (Cook α3-ish)
+EBAR_GAP = 40            # strict-real crossing gap (gaps 36..49 preserve real C2)
 TAPE_PAD_LEFT = 200      # ether room left of the tape for Ebar to emerge
 TAPE_PAD_RIGHT = 200     # ether room right of the tape
 

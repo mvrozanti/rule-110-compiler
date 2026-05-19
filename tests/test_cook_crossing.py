@@ -72,18 +72,29 @@ def test_c2_x_ebar_crossing_pattern_stationary_at_anchor(gap):
     assert ebar_anchor is not None, f"no period-(30,-8) match on left at gap={gap}"
 
 
+@pytest.mark.parametrize("gap", list(range(36, 50)))
+def test_c2_x_ebar_strict_real_c2_survival_at_specific_gaps(gap):
+    """STRICT-REAL Cook crossing: at gaps 36..49 inclusive, the cells at
+    c2_anchor after the Ebar pass are a REAL stationary glider — not
+    Cook-shifted ether at any of the 14 phases. Sweep
+    `scripts/find_cook_crossing.py` (and the audit in ADR 0012)
+    identified this contiguous range. Outside this range (gaps 0..35,
+    50..55 within this test's window), strict detection finds 0
+    survivors. 14 verified strict-real crossings.
+    """
+    c2_anchor, s_t, s_t_plus_c2, _ = _run_collision(gap)
+    assert is_real_stationary_glider(
+        s_t, s_t_plus_c2, c2_anchor, C2.extent, POST_STEPS
+    ), f"strict-real C2 survival expected at gap={gap}, none found"
+
+
 @pytest.mark.parametrize("gap", [0, 5, 10, 22, 25, 30])
-def test_c2_x_ebar_crossing_with_strict_detector_fails(gap):
-    """HONEST NEGATIVE RESULT (per AGENTS.md non-negotiable 2): the
-    `is_real_stationary_glider` strict check, which rejects all 14 phase-
-    shifted ether forms, finds NO real stationary glider at c2_anchor
-    after the Ebar pass. Combined with
-    `test_c2_x_ebar_crossing_pattern_stationary_at_anchor`, this
-    establishes that the cells at c2_anchor become phase-shifted ether
-    after the collision — i.e. Cook's 'crossing' as implemented by our
-    specific Cook-faithful catalogue does NOT preserve C2 as a real
-    glider. The C2 is effectively destroyed; only the ether-phase shift
-    Cook predicted remains."""
+def test_c2_x_ebar_strict_detector_rejects_at_gaps_below_36(gap):
+    """HONEST PARTIAL: strict detector rejects at gaps 0..35; cells
+    become Cook-shifted ether (no real glider). Gaps 36..49 give real
+    C2 survival — see `test_c2_x_ebar_strict_real_c2_survival_at_specific_gaps`.
+    The crossing window is alpha-aligned; only certain gap phases
+    produce a real preserved C2."""
     c2_anchor, s_t, s_t_plus_c2, _ = _run_collision(gap)
     assert not is_real_stationary_glider(
         s_t, s_t_plus_c2, c2_anchor, C2.extent, POST_STEPS

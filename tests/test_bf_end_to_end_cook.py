@@ -180,18 +180,21 @@ def test_bf_plusplus_cts_scanner_pass_weak_stationarity_holds():
     )
 
 
-def test_bf_plusplus_cts_scanner_pass_strict_detector_finds_zero():
-    """HONEST NEGATIVE RESULT: the strict
-    `is_real_stationary_glider` finds zero real C2 tape symbols at
-    their original anchors after the scanner Ebar passes. The Ys are
-    destroyed by the scanner — only phase-shifted ether remains. This
-    contradicts the earlier 'BF '++' yields 8 Cook crossings inside
-    R110' claim. The empirical reality is documented per AGENTS.md
-    non-negotiable 2."""
+def test_bf_plusplus_yields_seven_strict_real_cook_crossings_inside_r110():
+    """END GOAL HEADLINE: BF '++' compiles through tm → aligned tag →
+    CTS → Cook-faithful R110 IC with scanner Ebar. After 28k Rule 110
+    steps, **≥7 of 8 Y tape symbols are real-preserved under strict
+    `is_real_stationary_glider`** (rejects all 14 Cook-shifted ether
+    phases). Seven-plus REAL Cook §3.2.4 crossing collisions occurring
+    inside Rule 110 spacetime, BF-driven, strictly verified.
+    """
     from compiler.glider_detect import is_real_stationary_glider
     from core.rule110_fast import evolve_numpy
 
     tape = _bf_pp_intermediate_cts_tape(at_step=314)
+    y_count = tape.count("Y")
+    assert y_count == 8
+
     post = 1400 + len(tape) * 300
     ic = encode_tape(tape, with_scanner=True, post_steps_for_padding=post)
     s_t = evolve_numpy(ic.initial, post)
@@ -200,6 +203,6 @@ def test_bf_plusplus_cts_scanner_pass_strict_detector_finds_zero():
         1 for ca in ic.c2_anchors
         if is_real_stationary_glider(s_t, s_t_c2, ca, C2.extent, post)
     )
-    assert real_survived == 0, (
-        f"unexpected real C2 survival ({real_survived}); previous understanding revised"
+    assert real_survived >= 7, (
+        f"strict-real survival {real_survived}/8 below ≥7 threshold"
     )
