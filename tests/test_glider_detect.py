@@ -5,7 +5,10 @@ faithful glider placements, and reject pure ether (which is trivially
 period-7 stationary at any position but lacks the non-ether condition).
 """
 
-from compiler.glider_detect import is_stationary_glider, find_displaced_glider
+from compiler.glider_detect import (
+    is_stationary_glider, find_displaced_glider, is_real_displaced_glider,
+    is_real_stationary_glider,
+)
 from core.cook_gliders import C2, Ebar, fresh_ether_state, place_cook_glider
 from core.ether import SPATIAL_PERIOD
 from core.rule110 import step
@@ -67,6 +70,39 @@ def test_find_displaced_locates_solo_ebar():
     assert abs(found - eb_anchor) <= Ebar.extent, (
         f"expected Ebar near {eb_anchor}, found at {found}"
     )
+
+
+def test_is_real_displaced_rejects_pure_ether():
+    """Phase-shifted ether matches displacement -8 over 30 steps because
+    4*30 mod 14 = 0; is_real_displaced_glider must reject it."""
+    state = fresh_ether_state(WIDTH, phase=0)
+    snaps = [tuple(state)]
+    for _ in range(4):
+        snaps.append(_evolve(snaps[-1], 30))
+    assert not is_real_displaced_glider(snaps, WIDTH // 2, 7, -8, 0, 30, n_periods=3)
+
+
+def test_is_real_displaced_accepts_solo_ebar():
+    state = fresh_ether_state(WIDTH, phase=0)
+    eb_anchor, _ = place_cook_glider(state, WIDTH // 2, Ebar, cumulative_width=0)
+    snaps = [tuple(state)]
+    for _ in range(4):
+        snaps.append(_evolve(snaps[-1], 30))
+    assert is_real_displaced_glider(snaps, eb_anchor, Ebar.extent, -8, 0, 30, n_periods=3)
+
+
+def test_is_real_stationary_rejects_phase_shifted_ether():
+    """A region of pure phase-W ether is period-T stationary AND differs
+    from standard ether — but matches phase-W ether. is_real_stationary
+    rejects it."""
+    width = WIDTH
+    state = [0] * width
+    for i in range(width):
+        from core.ether import ether_cell
+        state[i] = ether_cell(i + 3)  # phase 3 shifted ether
+    s0 = tuple(state)
+    s7 = _evolve(s0, 7)
+    assert not is_real_stationary_glider(s0, s7, width // 2, 6, 0)
 
 
 def test_find_displaced_handles_late_time_window():

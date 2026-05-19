@@ -87,6 +87,42 @@ def is_real_stationary_glider(state_t, state_t_plus_T, anchor, extent, time_t,
     return True
 
 
+def is_real_displaced_glider(snapshots, anchor, extent,
+                             displacement, time_t_start, period_t, n_periods=3):
+    """Stronger displaced check across multiple periods.
+
+    `snapshots` must be a sequence of `n_periods+1` Rule 110 states,
+    `period_t` evolutions apart, starting at `time_t_start`. Returns True
+    iff the pattern at `anchor` in `snapshots[0]` reappears at
+    `anchor + k*displacement` in `snapshots[k]` for every k in
+    [1, n_periods], AND the pattern differs from every Cook-shifted
+    ether phase at time_t_start (excludes shifted-ether false matches
+    that arise because 4*period_t mod 14 = 0).
+    """
+    if len(snapshots) < n_periods + 1:
+        return False
+    n = len(snapshots[0])
+    if anchor < 0 or anchor + extent > n:
+        return False
+    window = tuple(snapshots[0][anchor + j] for j in range(extent))
+    for k in range(1, n_periods + 1):
+        moved = anchor + k * displacement
+        if moved < 0 or moved + extent > n:
+            return False
+        for j in range(extent):
+            if snapshots[k][moved + j] != window[j]:
+                return False
+    for cum_w in range(SPATIAL_PERIOD):
+        matches = True
+        for j in range(extent):
+            if snapshots[0][anchor + j] != ether_cell(anchor + j + cum_w + 4 * time_t_start):
+                matches = False
+                break
+        if matches:
+            return False
+    return True
+
+
 def find_displaced_glider(state_t, state_t_plus_T, displacement,
                           time_t, extent=8,
                           search_left=None, search_right=None):

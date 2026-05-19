@@ -17,7 +17,10 @@ crossing.
 
 import pytest
 
-from compiler.glider_detect import find_displaced_glider, is_stationary_glider
+from compiler.glider_detect import (
+    find_displaced_glider, is_stationary_glider, is_real_displaced_glider,
+    is_real_stationary_glider,
+)
 from core.cook_gliders import A, C2, Ebar, fresh_ether_state, place_cook_glider
 from core.ether import SPATIAL_PERIOD
 from core.rule110_fast import evolve_numpy
@@ -45,61 +48,47 @@ def _build_four_c2_plus_ebar():
     return state, tuple(c2_anchors)
 
 
-def test_all_four_c2_survive_ebar_pass():
+def test_all_four_c2_remain_pattern_stationary_at_anchor_after_ebar_pass():
+    """Cells at each c2_anchor remain weakly-stationary (period-7 self-
+    equal) after Ebar passes. NOTE: see `test_cook_crossing.py` —
+    strict `is_real_stationary_glider` REJECTS at each anchor; the
+    cells become phase-shifted ether, NOT a real C2. So the C2 is
+    effectively destroyed in the crossing. Weak-check assertion kept
+    as historical record.
+    """
     state, c2_anchors = _build_four_c2_plus_ebar()
     s_t = evolve_numpy(state, POST)
     s_t_c2 = evolve_numpy(s_t, C2.period_t)
     for i, anchor in enumerate(c2_anchors):
         assert is_stationary_glider(s_t, s_t_c2, anchor, C2.extent, POST), (
-            f"C2[{i}] did not survive the Ebar pass"
+            f"C2[{i}] cells not even weakly stationary"
         )
 
 
-def test_ebar_produces_an_a_glider_on_the_right():
-    """The 4-C2 × Ebar collision emits at least one A-class glider
+def test_ebar_produces_a_real_a_glider_on_the_right():
+    """The 4-C2 × Ebar collision emits at least one REAL A-class glider
     (period 3, +2) on the right side of the C2 character — Cook's
-    "two As along the way." We verify by locating one A glider via
-    the structural displacement detector."""
+    "two As along the way." Verified with strict detector that rejects
+    all 14 Cook-shifted ether phases."""
     state, c2_anchors = _build_four_c2_plus_ebar()
     s_t = evolve_numpy(state, POST)
-    s_t_a = evolve_numpy(s_t, A.period_t)
-    search_left = c2_anchors[-1] + C2.extent + 50
-    search_right = WIDTH - POST - 50
-    a_anchor = find_displaced_glider(
-        s_t, s_t_a, displacement=A.displacement, time_t=POST,
-        extent=A.extent, search_left=search_left, search_right=search_right,
-    )
-    assert a_anchor is not None, (
-        "expected an A glider on the right after 4-C2 × Ebar collision"
-    )
-
-
-def test_a_glider_product_persists_over_five_periods():
-    """The emitted A glider keeps displacing +2 cells per 3 steps for
-    5 consecutive periods, confirming it is a real Cook-class A and not
-    a transient artefact."""
-    state, c2_anchors = _build_four_c2_plus_ebar()
-    s_t = evolve_numpy(state, POST)
-    s_t_a = evolve_numpy(s_t, A.period_t)
-    search_left = c2_anchors[-1] + C2.extent + 50
-    search_right = WIDTH - POST - 50
-    a_anchor = find_displaced_glider(
-        s_t, s_t_a, displacement=A.displacement, time_t=POST,
-        extent=A.extent, search_left=search_left, search_right=search_right,
-    )
-    assert a_anchor is not None
-
     snapshots = [s_t]
-    for _ in range(5):
+    for _ in range(4):
         snapshots.append(evolve_numpy(snapshots[-1], A.period_t))
+    search_left = c2_anchors[-1] + C2.extent + 50
+    search_right = WIDTH - POST - 50
 
-    window = tuple(snapshots[0][a_anchor + j] for j in range(A.extent))
-    for k in range(1, 6):
-        moved_anchor = a_anchor + k * A.displacement
-        observed = tuple(snapshots[k][moved_anchor + j] for j in range(A.extent))
-        assert observed == window, (
-            f"A glider pattern shifted at period {k}: expected {window}, got {observed}"
-        )
+    real_a = None
+    for anchor in range(search_left, search_right):
+        if is_real_displaced_glider(
+            snapshots, anchor, A.extent, A.displacement, POST,
+            A.period_t, n_periods=3,
+        ):
+            real_a = anchor
+            break
+    assert real_a is not None, (
+        "expected a real A glider on the right after 4-C2 × Ebar collision"
+    )
 
 
 def test_ossifier_creates_new_stationary_c_class_glider():

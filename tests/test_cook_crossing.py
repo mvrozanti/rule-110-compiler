@@ -14,7 +14,9 @@ ADR 0006).
 
 import pytest
 
-from compiler.glider_detect import find_displaced_glider, is_stationary_glider
+from compiler.glider_detect import (
+    find_displaced_glider, is_stationary_glider, is_real_stationary_glider,
+)
 from core.cook_gliders import C2, Ebar, fresh_ether_state, place_cook_glider
 from core.ether import SPATIAL_PERIOD
 from core.rule110 import step
@@ -45,14 +47,20 @@ def _run_collision(gap):
 
 
 @pytest.mark.parametrize("gap", [0, 5, 10, 22, 25, 30])
-def test_c2_x_ebar_crossing_both_gliders_survive(gap):
-    """At several gap values, the C2 × Ebar collision is a crossing: C2 is
-    stationary at the original anchor AND a period-(30,-8) glider exists
-    on the left side."""
+def test_c2_x_ebar_crossing_pattern_stationary_at_anchor(gap):
+    """At several gap values, the cells at c2_anchor remain stationary
+    over a C2 period after the Ebar passage. NOTE: this is the WEAK
+    `is_stationary_glider` check; phase-shifted ether at the anchor
+    also satisfies it. The strict `is_real_stationary_glider` check
+    REJECTS at all 6 gaps tested — see
+    `test_c2_x_ebar_crossing_with_strict_detector_fails` for the
+    honest negative result. We retain this weak-check fixture as
+    historical evidence + sanity-pin, but the headline 'C2 survives
+    crossing' claim is empirically NOT supported by strict detection
+    in our catalogue."""
     c2_anchor, s_t, s_t_plus_c2, s_t_plus_eb = _run_collision(gap)
-
     c2_stationary = is_stationary_glider(s_t, s_t_plus_c2, c2_anchor, C2.extent, POST_STEPS)
-    assert c2_stationary, f"C2 not stationary at gap={gap}"
+    assert c2_stationary, f"C2 cells not even weakly stationary at gap={gap}"
 
     safe_lo = POST_STEPS + 50
     safe_hi = c2_anchor - 20
@@ -61,7 +69,25 @@ def test_c2_x_ebar_crossing_both_gliders_survive(gap):
         time_t=POST_STEPS, extent=Ebar.extent,
         search_left=safe_lo, search_right=safe_hi,
     )
-    assert ebar_anchor is not None, f"no period-(30,-8) glider on left at gap={gap}"
+    assert ebar_anchor is not None, f"no period-(30,-8) match on left at gap={gap}"
+
+
+@pytest.mark.parametrize("gap", [0, 5, 10, 22, 25, 30])
+def test_c2_x_ebar_crossing_with_strict_detector_fails(gap):
+    """HONEST NEGATIVE RESULT (per AGENTS.md non-negotiable 2): the
+    `is_real_stationary_glider` strict check, which rejects all 14 phase-
+    shifted ether forms, finds NO real stationary glider at c2_anchor
+    after the Ebar pass. Combined with
+    `test_c2_x_ebar_crossing_pattern_stationary_at_anchor`, this
+    establishes that the cells at c2_anchor become phase-shifted ether
+    after the collision — i.e. Cook's 'crossing' as implemented by our
+    specific Cook-faithful catalogue does NOT preserve C2 as a real
+    glider. The C2 is effectively destroyed; only the ether-phase shift
+    Cook predicted remains."""
+    c2_anchor, s_t, s_t_plus_c2, _ = _run_collision(gap)
+    assert not is_real_stationary_glider(
+        s_t, s_t_plus_c2, c2_anchor, C2.extent, POST_STEPS
+    ), f"unexpected real C2 survival at gap={gap}; previous understanding revised"
 
 
 def test_crossing_ebar_persists_over_eight_periods():
