@@ -104,5 +104,5 @@ Plan B is honest about limitations:
 
 - `tests/test_alpha_beta.py` — width-0 measurement for C and Ē.
 - `scripts/find_c_variants.py` — 16 classes of period-7 glider, all width 0.
-- `15-1-1.pdf` — Cook 2004, Figure 5 (glider widths), §4 (construction
+- `Cook_2004_UniversalityInElementaryCellularAutomata.pdf` — Cook 2004, Figure 5 (glider widths), §4 (construction
   conditions using widths).

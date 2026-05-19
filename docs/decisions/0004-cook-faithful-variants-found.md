@@ -70,5 +70,5 @@ on the structural obstacle named in ADR 0003.
 - `core/cook_gliders.py` — Cook-faithful glider catalogue.
 - `scripts/find_cook_variants.py` — width-W search with two-phase ether.
 - `tests/test_cook_gliders.py` — 9 propagation/halo tests.
-- `15-1-1.pdf` — Cook 2004, Figure 5 (widths), §3.2.4 (C2 × Ebar
+- `Cook_2004_UniversalityInElementaryCellularAutomata.pdf` — Cook 2004, Figure 5 (widths), §3.2.4 (C2 × Ebar
   crossing collision).

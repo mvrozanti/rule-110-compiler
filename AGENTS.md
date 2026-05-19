@@ -66,7 +66,7 @@ previous phase's tests are green.
 Carries forward the substance of the prior `.cursor/rules/cook-faithfulness.mdc`.
 The cellular-automaton layer must be exactly Cook's:
 
-- Glider patterns sourced (cite `15-1-1.pdf` §X.Y or an external reference table).
+- Glider patterns sourced (cite `Cook_2004_UniversalityInElementaryCellularAutomata.pdf` §X.Y or an external reference table).
   No inferred or hand-waved patterns.
 - Ether is the exact 14-cell period `(1,1,1,1,1,0,0,0,1,0,0,1,1,0)`,
   translating 4 cells left per step, temporal period 7. Verified in

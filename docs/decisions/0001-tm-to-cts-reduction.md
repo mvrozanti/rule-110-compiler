@@ -28,7 +28,7 @@ Originally this ADR chose Neary-Woods for tractability.
 
 Implement Cook §2.1 + §2.2 because:
 
-- It keeps the entire pipeline in one paper (the same `15-1-1.pdf` that
+- It keeps the entire pipeline in one paper (the same `Cook_2004_UniversalityInElementaryCellularAutomata.pdf` that
   specifies the Rule 110 layer).
 - The "alignment" mechanism Cook describes turned out to be implementable
   as a simple parity bit (`use_offset`) on the 2-tag system; see
@@ -68,7 +68,7 @@ Implement Cook §2.1 + §2.2 because:
 ## References
 
 - Cook, M. (2004). Universality in elementary cellular automata.
-  `15-1-1.pdf` in this repo, §2.1-§2.2 for TM → tag → CTS, §3-§4 for
+  `Cook_2004_UniversalityInElementaryCellularAutomata.pdf` in this repo, §2.1-§2.2 for TM → tag → CTS, §3-§4 for
   the Rule 110 construction.
 - Neary, T. and Woods, D. (2006). Small fast universal Turing machines.
   *Theoretical Computer Science*, 362(1-3), 171-195. Not used in the

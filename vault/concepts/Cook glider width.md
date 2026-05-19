@@ -7,7 +7,7 @@ date: 2026-05
 
 # Cook glider width
 
-Cook's per-glider "width" (Figure 5 of `15-1-1.pdf`): the offset, mod 14, of the [[Cook ether lattice|ether]] on the glider's right relative to the extrapolated continuation of the ether on its left. A → 6, B → 8, C₁ → 9, **C₂ → 3**, C₃ → 11, **Ē → 7**, etc.
+Cook's per-glider "width" (Figure 5 of `Cook_2004_UniversalityInElementaryCellularAutomata.pdf`): the offset, mod 14, of the [[Cook ether lattice|ether]] on the glider's right relative to the extrapolated continuation of the ether on its left. A → 6, B → 8, C₁ → 9, **C₂ → 3**, C₃ → 11, **Ē → 7**, etc.
 
 Width is the central quantity for **placing** Cook gliders. The [[Cook-faithful glider catalogue]] entries differ from the project's earlier-extracted "minimal delta" gliders precisely on this point: the older ones had width 0 (no ether shift), and were therefore not Cook's specific variants at all.
 

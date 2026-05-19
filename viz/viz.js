@@ -30,7 +30,6 @@ function r110History(initial, steps, useEther) {
   return h;
 }
 
-// --- Brainfuck reference interpreter (for BF pane PC/tape display) ---
 
 function bfParse(src) {
   const ops = [];
@@ -53,7 +52,6 @@ function bfParse(src) {
 const BYTE_WRAP = 256;
 
 function parseStdin(text) {
-  // Accept ASCII plus \xNN hex escapes and \n / \r / \t / \0.
   if (!text) return [];
   const out = [];
   for (let i = 0; i < text.length; i++) {
@@ -75,7 +73,6 @@ function parseStdin(text) {
 }
 
 function bytesToDisplay(bytes) {
-  // ASCII printables literal; control bytes as \xNN.
   let s = "";
   for (const b of bytes) {
     if (b === 10) s += "\\n";
@@ -113,7 +110,6 @@ function bfTrace(src, stdin = [], maxSteps = 20000, tapeSize = 256) {
   return { ops, history };
 }
 
-// --- Cyclic tag system ---
 
 function ctsParseSpec(text) {
   const lines = text.trim().split("\n").map(l => l.trim()).filter(l => l && !l.startsWith("#"));
@@ -148,7 +144,6 @@ function ctsTrace(spec, maxSteps = 200) {
   return history;
 }
 
-// --- Rule 110 IC parsing ---
 
 function parseR110IC(text, width) {
   const t = text.trim();
@@ -158,7 +153,6 @@ function parseR110IC(text, width) {
   return { ...buildICFromPlacements(t, width), useEther: true };
 }
 
-// --- Collision detection: project each glider worldline, find overlapping rows ---
 
 function detectCollisions(placements, steps, width) {
   if (!placements || placements.length < 2) return [];
@@ -187,7 +181,6 @@ function detectCollisions(placements, steps, width) {
       }
     }
   }
-  // Collapse consecutive same-pair events into representative start rows.
   const seen = new Map();
   const out = [];
   for (const e of events) {
@@ -202,7 +195,6 @@ function detectCollisions(placements, steps, width) {
   return out;
 }
 
-// --- Canvas DPR fit ---
 
 function fitCanvas(canvas) {
   const dpr = window.devicePixelRatio || 1;
@@ -219,7 +211,6 @@ function fitCanvas(canvas) {
   return { ctx, w, h };
 }
 
-// --- Rendering ---
 
 function drawBF(canvas, src, trace, t) {
   const { ctx, w, h } = fitCanvas(canvas);
@@ -278,7 +269,6 @@ function drawBF(canvas, src, trace, t) {
     }
   }
 
-  // Captured stdout below the tape strip.
   const outY = tapeY + cellW + 14;
   if (outY < h - 10) {
     ctx.fillStyle = "#888";
@@ -444,7 +434,6 @@ function drawR110(canvas, hist, t, placements, useEther, collisions) {
   }
 }
 
-// --- App state ---
 
 const state = {
   bfSrc: "+++[->+<]",

@@ -7,7 +7,7 @@ date: 2026-05
 
 # Cook universality proof
 
-Matthew Cook's 2004 proof that [[Rule 110]] is computationally universal, by reducing the [[Cyclic tag system]] (CTS) — itself reducible from Turing machines — to a specific arrangement of [[Cook-faithful glider catalogue|Cook gliders]] in Rule 110's spacetime. The paper is `15-1-1.pdf` in the [[Rule 110 compiler]] repo.
+Matthew Cook's 2004 proof that [[Rule 110]] is computationally universal, by reducing the [[Cyclic tag system]] (CTS) — itself reducible from Turing machines — to a specific arrangement of [[Cook-faithful glider catalogue|Cook gliders]] in Rule 110's spacetime. The paper is `Cook_2004_UniversalityInElementaryCellularAutomata.pdf` in the [[Rule 110 compiler]] repo.
 
 The proof is famously **a poor implementation spec**. Cook proves the conditions are jointly satisfiable; he does not ship:
 - bit-exact glider patterns (only pictures in Figure 4),

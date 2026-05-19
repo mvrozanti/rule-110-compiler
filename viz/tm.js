@@ -4,7 +4,6 @@
 const CELL_MAX = 7;
 const ALPHABET = Array.from({ length: CELL_MAX + 1 }, (_, i) => i);
 
-// AST nodes.
 function parseBF(src) {
   const root = [];
   const stack = [root];
@@ -117,5 +116,3 @@ function tmTrace(tm, tapeSize = 48, maxSteps = 4000) {
   }
   return history;
 }
-
-// CELL_MAX defined above

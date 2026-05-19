@@ -36,7 +36,7 @@ def _parse_js_object(src: str, name: str) -> dict:
 
 
 def _js_ether(src: str) -> tuple[int, ...]:
-    m = re.search(r"export const ETHER\s*=\s*\[(.*?)\];", src)
+    m = re.search(r"(?:export\s+)?const ETHER\s*=\s*\[(.*?)\];", src)
     if not m:
         raise AssertionError("ETHER not found in viz/gliders.js")
     return tuple(int(x.strip()) for x in m.group(1).split(",") if x.strip())

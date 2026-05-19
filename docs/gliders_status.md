@@ -53,7 +53,7 @@ The pragmatic options:
 
 1. Continue the constrained width-19 (and width-27 for E2) exhaustive
    sweep on a machine that can run it to completion (hours of CPU).
-2. Read the glider patterns directly from `15-1-1.pdf` Figure 4 or an
+2. Read the glider patterns directly from `Cook_2004_UniversalityInElementaryCellularAutomata.pdf` Figure 4 or an
    external reference table (Wolfram Atlas, Martinez & McIntosh).
 3. Accept that the construction does not strictly need E — Cook's
    §4 encoding uses C / Ē / A primarily — and document the

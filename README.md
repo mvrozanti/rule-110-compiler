@@ -91,6 +91,8 @@ CTS spec, or a Rule 110 initial bitstring / glider-placement string
 ringed in yellow with a `glider1×glider2` label so collisions are
 visually unmissable.
 
+![rule-110-compiler layered visualization — BF source (top-left), TM trace (top-right), CTS evolution (bottom-left), Rule 110 spacetime with A×Ebar collision (bottom-right)](docs/viz_screenshot.png)
+
 ## What landed in this round
 
 The pipeline now compiles end-to-end *in shape*:
@@ -154,4 +156,4 @@ requires (2) above.
   Neary-Woods 2006
 - `docs/reference/working_rule110.html` — the only known-good Rule 110 sim
   from the previous attempt; kept as parity reference
-- `15-1-1.pdf` — Cook's 2004 paper, the spec
+- `Cook_2004_UniversalityInElementaryCellularAutomata.pdf` — Cook's 2004 paper, the spec

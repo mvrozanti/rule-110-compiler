@@ -50,19 +50,15 @@ function placeGlider(state, g, anchor) {
   if (phaseHere !== g.left_phase) {
     adjustedAnchor += (g.left_phase - phaseHere + 14) % 14;
   }
-  const placed = [];
   for (const [offset, value] of g.delta) {
     const pos = adjustedAnchor + offset;
     if (pos >= 0 && pos < state.length) {
       state[pos] = value;
-      placed.push(pos);
     }
   }
-  return { anchor: adjustedAnchor, placedCells: placed };
+  return { anchor: adjustedAnchor };
 }
 
-// Parse a placement string like "A@30,Ebar@80,C@200" into a state of width `width`
-// preloaded with ether. Returns { state, placements: [{glider, anchor, placedCells}] }.
 function buildICFromPlacements(spec, width) {
   const state = etherWindow(0, width);
   const placements = [];
