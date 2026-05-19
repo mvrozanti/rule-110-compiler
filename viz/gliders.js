@@ -3,19 +3,19 @@
 // To place glider G starting at absolute position p, require p % 14 == G.left_phase
 // then set state[p + offset] = value for each (offset, value) in delta.
 
-export const ETHER = [1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0];
+const ETHER = [1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0];
 
-export function etherAt(i) {
+function etherAt(i) {
   return ETHER[((i % 14) + 14) % 14];
 }
 
-export function etherWindow(start, length) {
+function etherWindow(start, length) {
   const out = new Array(length);
   for (let i = 0; i < length; i++) out[i] = etherAt(start + i);
   return out;
 }
 
-export const GLIDERS = {
+const GLIDERS = {
   A: {
     name: "A", period: 3, displacement: 2, left_phase: 3,
     delta: [[0, 0], [2, 1], [3, 1]],
@@ -44,7 +44,7 @@ export const GLIDERS = {
   },
 };
 
-export function placeGlider(state, g, anchor) {
+function placeGlider(state, g, anchor) {
   let adjustedAnchor = anchor;
   const phaseHere = ((adjustedAnchor % 14) + 14) % 14;
   if (phaseHere !== g.left_phase) {
@@ -63,7 +63,7 @@ export function placeGlider(state, g, anchor) {
 
 // Parse a placement string like "A@30,Ebar@80,C@200" into a state of width `width`
 // preloaded with ether. Returns { state, placements: [{glider, anchor, placedCells}] }.
-export function buildICFromPlacements(spec, width) {
+function buildICFromPlacements(spec, width) {
   const state = etherWindow(0, width);
   const placements = [];
   if (!spec || !spec.trim()) {

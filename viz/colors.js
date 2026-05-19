@@ -9,18 +9,18 @@
 // renders with its own consistent palette and the same `t` slider drives
 // all four.
 
-export const BG = "#0b0b0b";
-export const ETHER_OFF = "#1a1a1a";
-export const ETHER_ON = "#333";
-export const CELL_OFF = "#0b0b0b";
-export const CELL_ON = "#e8e8e8";
+const BG = "#0b0b0b";
+const ETHER_OFF = "#1a1a1a";
+const ETHER_ON = "#333";
+const CELL_OFF = "#0b0b0b";
+const CELL_ON = "#e8e8e8";
 
-export const ACCENT = "#7df";
+const ACCENT = "#7df";
 
-export const CTS_Y = "#fc0";
-export const CTS_N = "#f0f";
+const CTS_Y = "#fc0";
+const CTS_N = "#f0f";
 
-export const BF_OP = {
+const BF_OP = {
   "+": "#4ade80",
   "-": "#f87171",
   ">": "#fbbf24",
@@ -31,7 +31,7 @@ export const BF_OP = {
   ",": "#c026d3",
 };
 
-export const GLIDER = {
+const GLIDER = {
   A: "#fc0",
   B: "#f80",
   C1: "#0ff",
@@ -49,7 +49,7 @@ const NAMED_COLORS = [
 ];
 
 const stateColorCache = new Map();
-export function stateColor(name) {
+function stateColor(name) {
   if (stateColorCache.has(name)) return stateColorCache.get(name);
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;

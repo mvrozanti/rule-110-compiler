@@ -70,17 +70,26 @@ nix develop --command pytest tests/test_gliders.py -v
 nix develop --command pytest tests/test_end_to_end.py -v
 ```
 
-Open the visualization:
+Open the visualization. Either:
 
 ```sh
-xdg-open viz/index.html
+xdg-open viz/index.html        # double-click also works
+```
+
+…or run the dev server (no-cache headers, refresh-on-edit):
+
+```sh
+python3 scripts/serve_viz.py   # opens http://127.0.0.1:8765/
 ```
 
 The viz has four panes: BF source, TM trace, CTS evolution, Rule 110
-spacetime. A `t` slider advances them all. The `demo…` dropdown picks
-matching content for all panes; you can also paste BF code, a CTS spec,
-or a Rule 110 initial bitstring / glider-placement string
-(e.g. `A@30,Ebar@140`).
+spacetime. A global `t` slider, ▶ play / ◀ step / step ▶ / ⟲ reset
+buttons, and a speed selector advance them all. The `demo…` dropdown
+picks matching content for every pane; you can also paste BF code, a
+CTS spec, or a Rule 110 initial bitstring / glider-placement string
+(e.g. `A@30,Ebar@140`). Worldline crossings in the Rule 110 pane are
+ringed in yellow with a `glider1×glider2` label so collisions are
+visually unmissable.
 
 ## What landed in this round
 
